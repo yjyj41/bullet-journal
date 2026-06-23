@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📔 My Bullet Journal</title>
+<style>
+  :root{
+    --bg:#f7f5f0; --card:#ffffff; --ink:#2b2b2b; --muted:#8a8275;
+    --accent:#c98a5e; --accent-soft:#f0e3d8; --line:#e7e1d6; --done:#a8b89a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.6;padding:24px 16px 80px}
+  .wrap{max-width:760px;margin:0 auto}
+  header{text-align:center;margin-bottom:8px}
+  header h1{font-size:28px;letter-spacing:-.5px}
+  header .date{color:var(--muted);font-size:14px;margin-top:4px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:20px 0 24px}
+  .tab{padding:8px 16px;border:1px solid var(--line);background:var(--card);border-radius:999px;
+    cursor:pointer;font-size:14px;color:var(--muted);transition:.15s}
+  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .panel{display:none;animation:fade .25s}
+  .panel.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}
+  .card h2{font-size:18px;margin-bottom:4px}
+  .card .sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+  .progress{height:8px;background:var(--accent-soft);border-radius:99px;overflow:hidden;margin:10px 0 16px}
+  .progress > i{display:block;height:100%;background:var(--accent);width:0;transition:.3s}
+  ul.tasks{list-style:none}
+  ul.tasks li{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line)}
+  ul.tasks li:last-child{border-bottom:none}
+  .chk{width:20px;height:20px;border:2px solid var(--accent);border-radius:6px;flex:0 0 auto;
+    cursor:pointer;margin-top:3px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;transition:.15s}
+  .chk.on{background:var(--done);border-color:var(--done)}
+  .txt{flex:1;border:none;background:transparent;font:inherit;color:var(--ink);outline:none;padding:2px 0}
+  .txt.done{text-decoration:line-through;color:var(--muted)}
+  .add{display:flex;gap:8px;margin-top:12px}
+  .add input{flex:1;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}
+  .add button,.btn{padding:9px 14px;border:none;background:var(--accent);color:#fff;border-radius:10px;cursor:pointer;font:inherit}
+  .del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:0 4px}
+  textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;resize:vertical;background:#fff}
+  label.fld{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
+  /* habit grid */
+  table.habit{width:100%;border-collapse:collapse;font-size:13px}
+  table.habit th,table.habit td{border:1px solid var(--line);padding:6px;text-align:center}
+  table.habit th{background:var(--accent-soft);font-weight:600}
+  table.habit td.day{background:#faf8f4;font-weight:600;white-space:nowrap}
+  .dot{width:22px;height:22px;border-radius:6px;border:2px solid var(--line);margin:0 auto;cursor:pointer;transition:.15s}
+  .dot.on{background:var(--accent);border-color:var(--accent)}
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:24px}
+  .reset{background:none;border:1px solid var(--line);color:var(--muted);font-size:12px;padding:6px 10px;border-radius:8px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📔 My Bullet Journal</h1>
+    <div class="date" id="today"></div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-p="daily">☀️ 일간</div>
+    <div class="tab" data-p="weekly">📅 주간</div>
+    <div class="tab" data-p="monthly">🗓️ 월간</div>
+    <div class="tab" data-p="habit">✅ 습관</div>
+    <div class="tab" data-p="goals">🎯 목표</div>
+  </div>
+
+  <!-- DAILY -->
+  <div class="panel active" id="daily">
+    <div class="card">
+      <h2>오늘의 한 가지 ★</h2>
+      <div class="sub">오늘 가장 중요한 일 하나</div>
+      <textarea data-note="mit" placeholder="가장 중요한 일을 적어보세요"></textarea>
+    </div>
+    <div class="card">
+      <h2>오늘의 할 일</h2>
+      <div class="progress"><i data-bar="daily"></i></div>
+      <ul class="tasks" data-list="daily"></ul>
+      <div class="add"><input placeholder="할 일 추가…" data-input="daily"><button data-addbtn="daily">추가</button></div>
+    </div>
+    <div class="card">
+      <h2>메모 & 감사</h2>
+      <textarea data-note="dnote" placeholder="오늘의 메모, 기분, 감사한 일…"></textarea>
+    </div>
+  </div>
+
+  <!-- WEEKLY -->
+  <div class="panel" id="weekly">
+    <div class="card">
+      <h2>이번 주 집중 ★</h2>
+      <textarea data-note="wfocus" placeholder="이번 주 가장 집중할 것"></textarea>
+    </div>
+    <div class="card">
+      <h2>주간 할 일</h2>
+      <div class="progress"><i data-bar="weekly"></i></div>
+      <ul class="tasks" data-list="weekly"></ul>
+      <div class="add"><input placeholder="할 일 추가…" data-input="weekly"><button data-addbtn="weekly">추가</button></div>
+    </div>
+    <div class="card">
+      <h2>주간 회고</h2>
+      <label class="fld">잘 된 것</label><textarea data-note="wgood"></textarea>
+      <label class="fld">바꿀 것</label><textarea data-note="wchange"></textarea>
+    </div>
+  </div>
+
+  <!-- MONTHLY -->
+  <div class="panel" id="monthly">
+    <div class="card">
+      <h2>이번 달의 의도</h2>
+      <textarea data-note="mintent" placeholder="이번 달 집중하고 싶은 한 가지"></textarea>
+    </div>
+    <div class="card">
+      <h2>이번 달 할 일</h2>
+      <div class="progress"><i data-bar="monthly"></i></div>
+      <ul class="tasks" data-list="monthly"></ul>
+      <div class="add"><input placeholder="할 일 추가…" data-input="monthly"><button data-addbtn="monthly">추가</button></div>
+    </div>
+    <div class="card">
+      <h2>월말 회고</h2>
+      <textarea data-note="mreview" placeholder="잘한 것 / 아쉬운 것 / 다음 달로"></textarea>
+    </div>
+  </div>
+
+  <!-- HABIT -->
+  <div class="panel" id="habit">
+    <div class="card">
+      <h2>습관 트래커</h2>
+      <div class="sub">칸을 눌러 그날 지킨 습관을 채우세요</div>
+      <div style="overflow-x:auto"><table class="habit" id="habitTable"></table></div>
+    </div>
+  </div>
+
+  <!-- GOALS -->
+  <div class="panel" id="goals">
+    <div class="card">
+      <h2>목표</h2>
+      <div class="progress"><i data-bar="goals"></i></div>
+      <ul class="tasks" data-list="goals"></ul>
+      <div class="add"><input placeholder="목표 추가…" data-input="goals"><button data-addbtn="goals">추가</button></div>
+    </div>
+    <div class="card">
+      <h2>아이디어 & 모음</h2>
+      <textarea data-note="ideas" placeholder="읽고 싶은 책, 보고 싶은 것, 아이디어…"></textarea>
+    </div>
+  </div>
+
+  <footer>
+    데이터는 이 브라우저에 자동 저장됩니다 ·
+    <button class="reset" id="reset">전체 초기화</button>
+  </footer>
+</div>
+
+<script>
+const KEY='bujo_v1';
+const habits=['💧 물','🏃 운동','📖 독서','🧘 명상','😴 일찍'];
+let db=JSON.parse(localStorage.getItem(KEY)||'{}');
+db.lists=db.lists||{daily:[],weekly:[],monthly:[],goals:[]};
+db.notes=db.notes||{};
+db.habit=db.habit||{};
+const save=()=>localStorage.setItem(KEY,JSON.stringify(db));
+
+// date
+const now=new Date();
+const wd=['일','월','화','수','목','금','토'][now.getDay()];
+document.getElementById('today').textContent=
+  `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${wd})`;
+
+// tabs
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById(t.dataset.p).classList.add('active');
+});
+
+// notes
+document.querySelectorAll('[data-note]').forEach(el=>{
+  const k=el.dataset.note;
+  el.value=db.notes[k]||'';
+  el.addEventListener('input',()=>{db.notes[k]=el.value;save();});
+});
+
+// lists
+function renderList(name){
+  const ul=document.querySelector(`[data-list="${name}"]`);
+  ul.innerHTML='';
+  const items=db.lists[name];
+  items.forEach((it,i)=>{
+    const li=document.createElement('li');
+    const chk=document.createElement('div');
+    chk.className='chk'+(it.done?' on':'');
+    chk.textContent=it.done?'✓':'';
+    chk.onclick=()=>{it.done=!it.done;save();renderList(name);};
+    const inp=document.createElement('input');
+    inp.className='txt'+(it.done?' done':'');
+    inp.value=it.text;
+    inp.oninput=()=>{it.text=inp.value;save();};
+    const del=document.createElement('button');
+    del.className='del';del.textContent='×';
+    del.onclick=()=>{items.splice(i,1);save();renderList(name);};
+    li.append(chk,inp,del);
+    ul.appendChild(li);
+  });
+  const bar=document.querySelector(`[data-bar="${name}"]`);
+  if(bar){const d=items.filter(x=>x.done).length;
+    bar.style.width=items.length?(d/items.length*100)+'%':'0';}
+}
+function addItem(name){
+  const inp=document.querySelector(`[data-input="${name}"]`);
+  const v=inp.value.trim();if(!v)return;
+  db.lists[name].push({text:v,done:false});inp.value='';save();renderList(name);
+}
+['daily','weekly','monthly','goals'].forEach(name=>{
+  document.querySelector(`[data-addbtn="${name}"]`).onclick=()=>addItem(name);
+  document.querySelector(`[data-input="${name}"]`).addEventListener('keydown',e=>{if(e.key==='Enter')addItem(name);});
+  renderList(name);
+});
+
+// habit table — current month days
+function buildHabit(){
+  const y=now.getFullYear(),m=now.getMonth();
+  const days=new Date(y,m+1,0).getDate();
+  const tbl=document.getElementById('habitTable');
+  let head='<tr><th>날짜</th>'+habits.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  let rows='';
+  for(let d=1;d<=days;d++){
+    rows+=`<tr><td class="day">${m+1}/${d}</td>`;
+    for(let h=0;h<habits.length;h++){
+      const key=`${m+1}-${d}-${h}`;
+      const on=db.habit[key]?' on':'';
+      rows+=`<td><div class="dot${on}" data-h="${key}"></div></td>`;
+    }
+    rows+='</tr>';
+  }
+  tbl.innerHTML=head+rows;
+  tbl.querySelectorAll('.dot').forEach(dot=>dot.onclick=()=>{
+    const k=dot.dataset.h;db.habit[k]=!db.habit[k];
+    dot.classList.toggle('on');save();
+  });
+}
+buildHabit();
+
+// reset
+document.getElementById('reset').onclick=()=>{
+  if(confirm('모든 데이터를 지울까요?')){localStorage.removeItem(KEY);location.reload();}
+};
+</script>
+</body>
+</html>
