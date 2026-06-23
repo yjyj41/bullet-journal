@@ -6,9 +6,10 @@
 <title>Bullet Journal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Gaegu:wght@300;400;700&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
+    --sans:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
     --paper:#f3efe3;        /* cream paper */
     --paper2:#efe9da;
     --dot:#cdc4ad;          /* dot grid */
@@ -21,7 +22,7 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
   body{
-    font-family:'Gaegu',cursive;
+    font-family:var(--sans);
     color:var(--ink);
     background:#ddd5c2;
     line-height:1.5;
@@ -49,18 +50,18 @@
   }
   header.masthead{position:relative;padding-left:34px;margin-bottom:6px}
   .masthead h1{
-    font-family:'Nanum Pen Script',cursive;
-    font-size:42px;line-height:1;letter-spacing:1px;font-weight:400;
+    font-family:var(--sans);
+    font-size:26px;line-height:1.05;letter-spacing:-.5px;font-weight:700;
   }
-  .masthead .meta{font-size:17px;color:var(--ink-soft);margin-top:2px}
+  .masthead .meta{font-size:14px;color:var(--ink-soft);margin-top:4px;letter-spacing:.5px}
   /* page tabs — like flipping notebook sections */
   nav.tabs{
     display:flex;flex-wrap:wrap;gap:0;margin:14px 0 8px;padding-left:34px;
     border-bottom:1.5px solid var(--ink);
   }
   .tab{
-    font-family:'Nanum Pen Script',cursive;font-size:22px;
-    padding:4px 14px 6px;cursor:pointer;color:var(--ink-soft);
+    font-family:var(--sans);font-size:14px;font-weight:500;
+    padding:6px 14px 7px;cursor:pointer;color:var(--ink-soft);
     border:1.5px solid transparent;border-bottom:none;position:relative;top:1.5px;
     background:transparent;line-height:1;
   }
@@ -73,8 +74,8 @@
   .panel.active{display:block;animation:turn .3s ease}
   @keyframes turn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
 
-  .ph{font-family:'Nanum Pen Script',cursive;font-size:30px;line-height:1;margin:2px 0 2px}
-  .sub{font-size:15px;color:var(--ink-soft);margin-bottom:10px}
+  .ph{font-family:var(--sans);font-size:19px;font-weight:700;letter-spacing:-.3px;line-height:1.1;margin:2px 0 2px}
+  .sub{font-size:13px;color:var(--ink-soft);margin-bottom:10px}
   hr.rule{border:none;border-top:1.5px solid var(--ink);margin:6px 0 14px;opacity:.8}
   .section{margin-bottom:26px}
 
@@ -82,8 +83,8 @@
   ul.log{list-style:none}
   ul.log li{display:flex;align-items:flex-start;gap:9px;padding:3px 0;}
   .bullet{
-    font-family:'Gaegu',cursive;font-size:21px;line-height:1.35;
-    width:20px;text-align:center;flex:0 0 auto;cursor:pointer;
+    font-family:var(--sans);font-size:16px;line-height:1.5;
+    width:18px;text-align:center;flex:0 0 auto;cursor:pointer;
     color:var(--ink);user-select:none;
   }
   .bullet.red{color:var(--red)}
@@ -91,8 +92,8 @@
     text-align:center;line-height:1.6;opacity:.25}
   .star.on{opacity:1}
   .itext{
-    flex:1;border:none;background:transparent;font-family:'Gaegu',cursive;
-    font-size:19px;color:var(--ink);outline:none;padding:1px 0;
+    flex:1;border:none;background:transparent;font-family:var(--sans);
+    font-size:14.5px;color:var(--ink);outline:none;padding:2px 0;
     border-bottom:1px solid transparent;
   }
   .itext:focus{border-bottom:1px dashed var(--rule)}
@@ -104,18 +105,18 @@
   ul.log li:hover .del{opacity:.6}
 
   .adder{display:flex;align-items:center;gap:6px;margin-top:8px;padding-left:0}
-  .typebtn{font-family:'Gaegu',cursive;font-size:18px;width:26px;height:26px;
+  .typebtn{font-family:var(--sans);font-size:18px;width:26px;height:26px;
     border:1.5px solid var(--rule);background:var(--paper2);border-radius:4px;
     cursor:pointer;color:var(--ink);display:flex;align-items:center;justify-content:center}
   .typebtn.sel{border-color:var(--ink);background:#e7dec9}
   .adder input{flex:1;border:none;border-bottom:1.5px solid var(--rule);
-    background:transparent;font-family:'Gaegu',cursive;font-size:19px;color:var(--ink);
-    outline:none;padding:2px 0}
+    background:transparent;font-family:var(--sans);font-size:14.5px;color:var(--ink);
+    outline:none;padding:4px 0}
   .adder input::placeholder{color:#b3a890}
 
   textarea.note{
     width:100%;min-height:84px;border:none;background:transparent;
-    font-family:'Gaegu',cursive;font-size:19px;color:var(--ink);resize:vertical;
+    font-family:var(--sans);font-size:14.5px;color:var(--ink);resize:vertical;
     outline:none;line-height:32px;
     background-image:linear-gradient(transparent 30px, var(--rule) 31px);
     background-size:100% 32px;padding:0;
@@ -126,23 +127,23 @@
   @media(max-width:560px){.spread{grid-template-columns:1fr}}
   ul.cal{list-style:none}
   ul.cal li{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--rule);padding:2px 0}
-  ul.cal .dnum{font-size:16px;width:22px;text-align:right;color:var(--ink-soft);flex:0 0 auto}
-  ul.cal .dw{font-size:15px;width:16px;text-align:center;flex:0 0 auto;color:var(--ink-soft)}
+  ul.cal .dnum{font-size:13px;width:22px;text-align:right;color:var(--ink-soft);flex:0 0 auto}
+  ul.cal .dw{font-size:12px;width:16px;text-align:center;flex:0 0 auto;color:var(--ink-soft)}
   ul.cal .dw.sun{color:var(--red)}
-  ul.cal .dev{flex:1;border:none;background:transparent;font-family:'Gaegu',cursive;
-    font-size:17px;color:var(--ink);outline:none;padding:1px 0}
+  ul.cal .dev{flex:1;border:none;background:transparent;font-family:var(--sans);
+    font-size:13.5px;color:var(--ink);outline:none;padding:3px 0}
   ul.cal li.today{background:rgba(168,68,58,.08)}
   ul.cal li.today .dnum{color:var(--red);font-weight:700}
 
   /* future log */
   .future{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   @media(max-width:560px){.future{grid-template-columns:1fr}}
-  .fbox h4{font-family:'Nanum Pen Script',cursive;font-size:24px;border-bottom:1.5px solid var(--ink);margin-bottom:4px}
+  .fbox h4{font-family:var(--sans);font-size:14px;font-weight:700;border-bottom:1.5px solid var(--ink);margin-bottom:4px;padding-bottom:2px}
 
   /* habit tracker — dotted grid */
   .htable{width:100%;border-collapse:collapse;font-size:15px}
   .htable th,.htable td{padding:3px;text-align:center}
-  .htable thead th{font-family:'Gaegu',cursive;font-weight:700;font-size:14px;
+  .htable thead th{font-family:var(--sans);font-weight:700;font-size:14px;
     border-bottom:1.5px solid var(--ink);color:var(--ink)}
   .htable td.d{font-size:13px;color:var(--ink-soft);text-align:right;padding-right:6px}
   .hdot{width:18px;height:18px;border-radius:50%;border:1.4px solid var(--rule);
@@ -151,16 +152,16 @@
   .hwrap{overflow-x:auto}
 
   /* key legend */
-  .key-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:19px}
+  .key-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:14px}
   @media(max-width:560px){.key-grid{grid-template-columns:1fr}}
   .key-grid div{display:flex;gap:12px;align-items:baseline;border-bottom:1px dotted var(--rule);padding:3px 0}
   .key-grid .sym{width:26px;text-align:center;font-weight:700}
   .key-grid .sym.red{color:var(--red)}
 
   footer{text-align:center;color:var(--ink-soft);font-size:14px;margin-top:18px;padding-left:34px}
-  .reset{font-family:'Gaegu',cursive;background:none;border:1px solid var(--rule);
+  .reset{font-family:var(--sans);background:none;border:1px solid var(--rule);
     color:var(--ink-soft);font-size:14px;padding:3px 10px;border-radius:4px;cursor:pointer}
-  .hint{font-size:14px;color:var(--ink-soft);margin-top:4px}
+  .hint{font-size:12.5px;color:var(--ink-soft);margin-top:6px}
 </style>
 </head>
 <body>
