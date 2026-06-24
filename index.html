@@ -8,431 +8,256 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --sans:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
-    --paper:#f3efe3;        /* cream paper */
-    --paper2:#efe9da;
-    --dot:#cdc4ad;          /* dot grid */
-    --ink:#34302a;          /* dark sepia ink */
-    --ink-soft:#7c7565;
-    --red:#a8443a;          /* red pen */
-    --rule:#d8cfb8;         /* hand-drawn rule */
-    --shadow:rgba(60,50,30,.18);
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
-  body{
-    font-family:var(--sans);
-    color:var(--ink);
-    background:#ddd5c2;
-    line-height:1.5;
-    padding:18px 10px 60px;
-    -webkit-font-smoothing:antialiased;
-  }
-  /* the notebook page */
-  .book{
-    max-width:680px;margin:0 auto;
-    background:
-      radial-gradient(var(--dot) 1.1px, transparent 1.2px);
-    background-size:18px 18px;
-    background-color:var(--paper);
-    border:1px solid #c9bfa4;
-    border-radius:3px;
-    box-shadow:0 10px 30px var(--shadow), inset 0 0 60px rgba(120,100,60,.06);
-    padding:26px 26px 40px;
-    position:relative;
-    min-height:80vh;
-  }
-  /* left margin line like a real notebook */
-  .book::before{
-    content:"";position:absolute;left:46px;top:0;bottom:0;
-    width:1px;background:var(--red);opacity:.25;
-  }
-  header.masthead{position:relative;padding-left:34px;margin-bottom:6px}
-  .masthead h1{
-    font-family:var(--sans);
-    font-size:26px;line-height:1.05;letter-spacing:-.5px;font-weight:700;
-  }
-  .masthead .meta{font-size:14px;color:var(--ink-soft);margin-top:4px;letter-spacing:.5px}
-  /* page tabs — like flipping notebook sections */
-  nav.tabs{
-    display:flex;flex-wrap:wrap;gap:0;margin:14px 0 8px;padding-left:34px;
-    border-bottom:1.5px solid var(--ink);
-  }
-  .tab{
-    font-family:var(--sans);font-size:14px;font-weight:500;
-    padding:6px 14px 7px;cursor:pointer;color:var(--ink-soft);
-    border:1.5px solid transparent;border-bottom:none;position:relative;top:1.5px;
-    background:transparent;line-height:1;
-  }
-  .tab.active{
-    color:var(--ink);background:var(--paper2);
-    border-color:var(--ink);border-bottom:1.5px solid var(--paper2);
-    border-radius:4px 4px 0 0;
-  }
-  .panel{display:none;padding:14px 0 0 34px}
-  .panel.active{display:block;animation:turn .3s ease}
-  @keyframes turn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
-
-  .ph{font-family:var(--sans);font-size:19px;font-weight:700;letter-spacing:-.3px;line-height:1.1;margin:2px 0 2px}
-  .sub{font-size:13px;color:var(--ink-soft);margin-bottom:10px}
-  hr.rule{border:none;border-top:1.5px solid var(--ink);margin:6px 0 14px;opacity:.8}
-  .section{margin-bottom:26px}
-
-  /* rapid-logging list */
-  ul.log{list-style:none}
-  ul.log li{display:flex;align-items:flex-start;gap:9px;padding:3px 0;}
-  .bullet{
-    font-family:var(--sans);font-size:16px;line-height:1.5;
-    width:18px;text-align:center;flex:0 0 auto;cursor:pointer;
-    color:var(--ink);user-select:none;
-  }
-  .bullet.red{color:var(--red)}
-  .star{flex:0 0 auto;cursor:pointer;color:var(--red);font-size:16px;width:14px;
-    text-align:center;line-height:1.6;opacity:.25}
-  .star.on{opacity:1}
-  .itext{
-    flex:1;border:none;background:transparent;font-family:var(--sans);
-    font-size:14.5px;color:var(--ink);outline:none;padding:2px 0;
-    border-bottom:1px solid transparent;
-  }
-  .itext:focus{border-bottom:1px dashed var(--rule)}
-  .itext.s-done{color:var(--ink-soft);text-decoration:line-through}
-  .itext.s-migrated,.itext.s-scheduled{color:var(--ink-soft)}
-  .itext.s-strike{color:#b3a991;text-decoration:line-through}
-  .del{flex:0 0 auto;border:none;background:none;color:var(--ink-soft);
-    cursor:pointer;font-size:18px;opacity:0;line-height:1.4;padding:0 2px}
-  ul.log li:hover .del{opacity:.6}
-
-  .adder{display:flex;align-items:center;gap:6px;margin-top:8px;padding-left:0}
-  .typebtn{font-family:var(--sans);font-size:18px;width:26px;height:26px;
-    border:1.5px solid var(--rule);background:var(--paper2);border-radius:4px;
-    cursor:pointer;color:var(--ink);display:flex;align-items:center;justify-content:center}
-  .typebtn.sel{border-color:var(--ink);background:#e7dec9}
-  .adder input{flex:1;border:none;border-bottom:1.5px solid var(--rule);
-    background:transparent;font-family:var(--sans);font-size:14.5px;color:var(--ink);
-    outline:none;padding:4px 0}
-  .adder input::placeholder{color:#b3a890}
-
-  textarea.note{
-    width:100%;min-height:84px;border:none;background:transparent;
-    font-family:var(--sans);font-size:14.5px;color:var(--ink);resize:vertical;
-    outline:none;line-height:32px;
-    background-image:linear-gradient(transparent 30px, var(--rule) 31px);
-    background-size:100% 32px;padding:0;
-  }
-
-  /* monthly spread */
-  .spread{display:grid;grid-template-columns:1fr 1fr;gap:22px}
-  @media(max-width:560px){.spread{grid-template-columns:1fr}}
-  ul.cal{list-style:none}
-  ul.cal li{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--rule);padding:2px 0}
-  ul.cal .dnum{font-size:13px;width:22px;text-align:right;color:var(--ink-soft);flex:0 0 auto}
-  ul.cal .dw{font-size:12px;width:16px;text-align:center;flex:0 0 auto;color:var(--ink-soft)}
-  ul.cal .dw.sun{color:var(--red)}
-  ul.cal .dev{flex:1;border:none;background:transparent;font-family:var(--sans);
-    font-size:13.5px;color:var(--ink);outline:none;padding:3px 0}
-  ul.cal li.today{background:rgba(168,68,58,.08)}
-  ul.cal li.today .dnum{color:var(--red);font-weight:700}
-
-  /* future log */
-  .future{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  @media(max-width:560px){.future{grid-template-columns:1fr}}
-  .fbox h4{font-family:var(--sans);font-size:14px;font-weight:700;border-bottom:1.5px solid var(--ink);margin-bottom:4px;padding-bottom:2px}
-
-  /* habit tracker — dotted grid */
-  .htable{width:100%;border-collapse:collapse;font-size:15px}
-  .htable th,.htable td{padding:3px;text-align:center}
-  .htable thead th{font-family:var(--sans);font-weight:700;font-size:14px;
-    border-bottom:1.5px solid var(--ink);color:var(--ink)}
-  .htable td.d{font-size:13px;color:var(--ink-soft);text-align:right;padding-right:6px}
-  .hdot{width:18px;height:18px;border-radius:50%;border:1.4px solid var(--rule);
-    margin:0 auto;cursor:pointer;transition:.12s}
-  .hdot.on{background:var(--ink);border-color:var(--ink)}
-  .hwrap{overflow-x:auto}
-
-  /* key legend */
-  .key-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:14px}
-  @media(max-width:560px){.key-grid{grid-template-columns:1fr}}
-  .key-grid div{display:flex;gap:12px;align-items:baseline;border-bottom:1px dotted var(--rule);padding:3px 0}
-  .key-grid .sym{width:26px;text-align:center;font-weight:700}
-  .key-grid .sym.red{color:var(--red)}
-
-  footer{text-align:center;color:var(--ink-soft);font-size:14px;margin-top:18px;padding-left:34px}
-  .reset{font-family:var(--sans);background:none;border:1px solid var(--rule);
-    color:var(--ink-soft);font-size:14px;padding:3px 10px;border-radius:4px;cursor:pointer}
-  .hint{font-size:12.5px;color:var(--ink-soft);margin-top:6px}
+:root{--sans:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;--paper:#f3efe3;--paper2:#efe9da;--dot:#cdc4ad;--ink:#34302a;--ink-soft:#7c7565;--red:#a8443a;--rule:#d8cfb8;--shadow:rgba(60,50,30,.18);}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);color:var(--ink);background:#ddd5c2;line-height:1.5;padding:18px 10px 60px;-webkit-font-smoothing:antialiased;}
+.book{max-width:680px;margin:0 auto;background:radial-gradient(var(--dot) 1.1px, transparent 1.2px);background-size:18px 18px;background-color:var(--paper);border:1px solid #c9bfa4;border-radius:3px;box-shadow:0 10px 30px var(--shadow), inset 0 0 60px rgba(120,100,60,.06);padding:26px 26px 40px;position:relative;min-height:80vh;}
+.book::before{content:"";position:absolute;left:46px;top:0;bottom:0;width:1px;background:var(--red);opacity:.25;}
+header.masthead{position:relative;padding-left:34px;margin-bottom:6px}
+.masthead h1{font-family:var(--sans);font-size:26px;line-height:1.05;letter-spacing:-.5px;font-weight:700;}
+.masthead .meta{font-size:14px;color:var(--ink-soft);margin-top:4px;letter-spacing:.5px}
+nav.tabs{display:flex;flex-wrap:wrap;gap:0;margin:14px 0 8px;padding-left:34px;border-bottom:1.5px solid var(--ink);}
+.tab{font-family:var(--sans);font-size:14px;font-weight:500;padding:6px 14px 7px;cursor:pointer;color:var(--ink-soft);border:1.5px solid transparent;border-bottom:none;position:relative;top:1.5px;background:transparent;line-height:1;}
+.tab.active{color:var(--ink);background:var(--paper2);border-color:var(--ink);border-bottom:1.5px solid var(--paper2);border-radius:4px 4px 0 0;}
+.panel{display:none;padding:14px 0 0 34px}
+.panel.active{display:block;animation:turn .3s ease}
+@keyframes turn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
+.ph{font-family:var(--sans);font-size:19px;font-weight:700;letter-spacing:-.3px;line-height:1.1;margin:2px 0 2px}
+.sub{font-size:13px;color:var(--ink-soft);margin-bottom:10px}
+hr.rule{border:none;border-top:1.5px solid var(--ink);margin:6px 0 14px;opacity:.8}
+ul.log{list-style:none}
+ul.log li{display:flex;align-items:flex-start;gap:9px;padding:3px 0;}
+.bullet{font-family:var(--sans);font-size:16px;line-height:1.5;width:18px;text-align:center;flex:0 0 auto;cursor:pointer;color:var(--ink);user-select:none;}
+.bullet.red{color:var(--red)}
+.star{flex:0 0 auto;cursor:pointer;color:var(--red);font-size:16px;width:14px;text-align:center;line-height:1.6;opacity:.25}
+.star.on{opacity:1}
+.itext{flex:1;border:none;background:transparent;font-family:var(--sans);font-size:14.5px;color:var(--ink);outline:none;padding:2px 0;border-bottom:1px solid transparent;}
+.itext:focus{border-bottom:1px dashed var(--rule)}
+.itext.s-done{color:var(--ink-soft);text-decoration:line-through}
+.itext.s-migrated,.itext.s-scheduled{color:var(--ink-soft)}
+.itext.s-strike{color:#b3a991;text-decoration:line-through}
+.del{flex:0 0 auto;border:none;background:none;color:var(--ink-soft);cursor:pointer;font-size:18px;opacity:0;line-height:1.4;padding:0 2px}
+ul.log li:hover .del{opacity:.6}
+.adder{display:flex;align-items:center;gap:6px;margin-top:8px;padding-left:0}
+.typebtn{font-family:var(--sans);font-size:18px;width:26px;height:26px;border:1.5px solid var(--rule);background:var(--paper2);border-radius:4px;cursor:pointer;color:var(--ink);display:flex;align-items:center;justify-content:center}
+.typebtn.sel{border-color:var(--ink);background:#e7dec9}
+.adder input{flex:1;border:none;border-bottom:1.5px solid var(--rule);background:transparent;font-family:var(--sans);font-size:14.5px;color:var(--ink);outline:none;padding:4px 0}
+.adder input::placeholder{color:#b3a890}
+textarea.note{width:100%;min-height:84px;border:none;background:transparent;font-family:var(--sans);font-size:14.5px;color:var(--ink);resize:vertical;outline:none;line-height:32px;background-image:linear-gradient(transparent 30px, var(--rule) 31px);background-size:100% 32px;padding:0;}
+.spread{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:560px){.spread{grid-template-columns:1fr}}
+ul.cal{list-style:none}
+ul.cal li{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--rule);padding:2px 0}
+ul.cal .dnum{font-size:13px;width:22px;text-align:right;color:var(--ink-soft);flex:0 0 auto}
+ul.cal .dw{font-size:12px;width:16px;text-align:center;flex:0 0 auto;color:var(--ink-soft)}
+ul.cal .dw.sun{color:var(--red)}
+ul.cal .dev{flex:1;border:none;background:transparent;font-family:var(--sans);font-size:13.5px;color:var(--ink);outline:none;padding:3px 0}
+ul.cal li.today{background:rgba(168,68,58,.08)}
+ul.cal li.today .dnum{color:var(--red);font-weight:700}
+.future{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:560px){.future{grid-template-columns:1fr}}
+.fbox h4{font-family:var(--sans);font-size:14px;font-weight:700;border-bottom:1.5px solid var(--ink);margin-bottom:4px;padding-bottom:2px}
+.htable{width:100%;border-collapse:collapse;font-size:15px}
+.htable th,.htable td{padding:3px;text-align:center}
+.htable thead th{font-family:var(--sans);font-weight:700;font-size:14px;border-bottom:1.5px solid var(--ink);color:var(--ink)}
+.htable td.d{font-size:13px;color:var(--ink-soft);text-align:right;padding-right:6px}
+.hdot{width:18px;height:18px;border-radius:50%;border:1.4px solid var(--rule);margin:0 auto;cursor:pointer;transition:.12s}
+.hdot.on{background:var(--ink);border-color:var(--ink)}
+.hwrap{overflow-x:auto}
+.key-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:14px}
+@media(max-width:560px){.key-grid{grid-template-columns:1fr}}
+.key-grid div{display:flex;gap:12px;align-items:baseline;border-bottom:1px dotted var(--rule);padding:3px 0}
+.key-grid .sym{width:26px;text-align:center;font-weight:700}
+.key-grid .sym.red{color:var(--red)}
+footer{text-align:center;color:var(--ink-soft);font-size:14px;margin-top:18px;padding-left:34px}
+.reset{font-family:var(--sans);background:none;border:1px solid var(--rule);color:var(--ink-soft);font-size:14px;padding:3px 10px;border-radius:4px;cursor:pointer}
+.hint{font-size:12.5px;color:var(--ink-soft);margin-top:6px}
+.authbar{position:absolute;top:0;right:0;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-soft)}
+.authbtn{font-family:var(--sans);background:var(--paper2);border:1.5px solid var(--rule);color:var(--ink);font-size:13px;padding:5px 12px;border-radius:6px;cursor:pointer}
+.authbtn:hover{border-color:var(--ink)}
+#signedIn{display:none;align-items:center;gap:8px}
+.gate{max-width:680px;margin:60px auto;text-align:center;padding:40px 20px}
+.gate h2{font-size:22px;margin-bottom:8px}
+.gate p{color:var(--ink-soft);font-size:14px;margin-bottom:20px}
+.savestate{font-size:11.5px;color:var(--ink-soft)}
 </style>
 </head>
 <body>
 <div class="book">
-  <header class="masthead">
-    <h1>Bullet Journal</h1>
-    <div class="meta" id="meta"></div>
-  </header>
-
-  <nav class="tabs">
-    <button class="tab active" data-p="daily">Daily</button>
-    <button class="tab" data-p="monthly">Monthly</button>
-    <button class="tab" data-p="future">Future</button>
-    <button class="tab" data-p="habit">Tracker</button>
-    <button class="tab" data-p="index">Index</button>
-    <button class="tab" data-p="key">Key</button>
-  </nav>
-
-  <!-- DAILY -->
-  <section class="panel active" id="daily">
-    <div class="ph" id="dailyDate">Daily Log</div>
-    <hr class="rule">
-    <ul class="log" data-list="daily"></ul>
-    <div class="adder">
-      <button class="typebtn sel" data-type="task" data-for="daily">•</button>
-      <button class="typebtn" data-type="event" data-for="daily">○</button>
-      <button class="typebtn" data-type="note" data-for="daily">–</button>
-      <input data-input="daily" placeholder="빠르게 기록하기…">
-    </div>
-    <div class="hint">불릿을 눌러 상태를 바꿔요 ·  → ✕완료 → ›이동 → ‹예정 →  · 별표는 우선순위</div>
-  </section>
-
-  <!-- MONTHLY -->
-  <section class="panel" id="monthly">
-    <div class="ph" id="monthTitle">Monthly Log</div>
-    <hr class="rule">
-    <div class="spread">
-      <div>
-        <div class="sub">달력 — 하루에 한 줄</div>
-        <ul class="cal" id="calList"></ul>
-      </div>
-      <div>
-        <div class="sub">이번 달 할 일</div>
-        <ul class="log" data-list="monthly"></ul>
-        <div class="adder">
-          <button class="typebtn sel" data-type="task" data-for="monthly">•</button>
-          <button class="typebtn" data-type="event" data-for="monthly">○</button>
-          <button class="typebtn" data-type="note" data-for="monthly">–</button>
-          <input data-input="monthly" placeholder="할 일 추가…">
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FUTURE -->
-  <section class="panel" id="future">
-    <div class="ph">Future Log</div>
-    <div class="sub">이번 달 이후의 일들을 미리 모아둬요</div>
-    <hr class="rule">
-    <div class="future" id="futureGrid"></div>
-  </section>
-
-  <!-- HABIT -->
-  <section class="panel" id="habit">
-    <div class="ph">Tracker</div>
-    <div class="sub">점을 채워 그날 지킨 습관을 기록해요</div>
-    <hr class="rule">
-    <div class="hwrap"><table class="htable" id="habitTable"></table></div>
-  </section>
-
-  <!-- INDEX -->
-  <section class="panel" id="index">
-    <div class="ph">Index</div>
-    <div class="sub">어디에 무엇을 적었는지, 모은 것들(Collections)</div>
-    <hr class="rule">
-    <textarea class="note" data-note="index" placeholder="예) 독서 리스트 · 여행 계획 · 감사 일기 · 아이디어…"></textarea>
-  </section>
-
-  <!-- KEY -->
-  <section class="panel" id="key">
-    <div class="ph">Key</div>
-    <div class="sub">Rapid Logging — 기호 체계</div>
-    <hr class="rule">
-    <div class="key-grid">
-      <div><span class="sym">•</span> 할 일 (Task)</div>
-      <div><span class="sym">✕</span> 완료 (Done)</div>
-      <div><span class="sym">›</span> 이동 — 다음 달/날로 (Migrated)</div>
-      <div><span class="sym">‹</span> 예정 — Future Log로 (Scheduled)</div>
-      <div><span class="sym">○</span> 이벤트 (Event)</div>
-      <div><span class="sym">–</span> 메모 (Note)</div>
-      <div><span class="sym red">★</span> 우선순위 (Priority)</div>
-      <div><span class="sym">~~~</span> 취소선 — 안 함 (Irrelevant)</div>
-    </div>
-    <p class="hint" style="margin-top:14px">
-      Ryder Carroll의 Bullet Journal Method를 따릅니다. 핵심은 ‘빠르게, 짧게’ 적는 것 —
-      길게 쓰지 말고 한 줄 불릿으로.
-    </p>
-  </section>
-
-  <footer>
-    데이터는 이 브라우저에 자동 저장 ·
-    <button class="reset" id="reset">전체 초기화</button>
-  </footer>
+<header class="masthead">
+<div class="authbar">
+<span id="saveState" class="savestate"></span>
+<button class="authbtn" id="signInBtn">Google 로그인</button>
+<span id="signedIn"><span id="userName"></span><button class="authbtn" id="signOutBtn">로그아웃</button></span>
 </div>
-
-<script>
-const KEY='bujo_v2';
-let db=JSON.parse(localStorage.getItem(KEY)||'{}');
-db.lists = db.lists || {daily:[], monthly:[]};
-db.notes = db.notes || {};
-db.habit = db.habit || {};
-db.cal   = db.cal   || {};
-db.future= db.future || {};
-const save=()=>localStorage.setItem(KEY,JSON.stringify(db));
-
-const now=new Date();
-const Y=now.getFullYear(), M=now.getMonth(), D=now.getDate();
+<h1>Bullet Journal</h1>
+<div class="meta" id="meta"></div>
+</header>
+<div id="gate" class="gate">
+<h2>로그인이 필요해요</h2>
+<p>구글 계정으로 로그인하면 어느 기기에서든 같은 기록을 볼 수 있어요. (나만 볼 수 있어요)</p>
+<button class="authbtn" id="gateSignIn">Google로 로그인</button>
+</div>
+<div id="appBody" style="display:none">
+<nav class="tabs">
+<button class="tab active" data-p="daily">Daily</button>
+<button class="tab" data-p="monthly">Monthly</button>
+<button class="tab" data-p="future">Future</button>
+<button class="tab" data-p="habit">Tracker</button>
+<button class="tab" data-p="index">Index</button>
+<button class="tab" data-p="key">Key</button>
+</nav>
+<section class="panel active" id="daily">
+<div class="ph" id="dailyDate">Daily Log</div>
+<hr class="rule">
+<ul class="log" data-list="daily"></ul>
+<div class="adder">
+<button class="typebtn sel" data-type="task" data-for="daily">&bull;</button>
+<button class="typebtn" data-type="event" data-for="daily">&#9675;</button>
+<button class="typebtn" data-type="note" data-for="daily">&ndash;</button>
+<input data-input="daily" placeholder="빠르게 기록하기…">
+</div>
+<div class="hint">불릿을 눌러 상태를 바꿔요 · 완료/이동/예정 · 별표는 우선순위</div>
+</section>
+<section class="panel" id="monthly">
+<div class="ph" id="monthTitle">Monthly Log</div>
+<hr class="rule">
+<div class="spread">
+<div>
+<div class="sub">달력 — 하루에 한 줄</div>
+<ul class="cal" id="calList"></ul>
+</div>
+<div>
+<div class="sub">이번 달 할 일</div>
+<ul class="log" data-list="monthly"></ul>
+<div class="adder">
+<button class="typebtn sel" data-type="task" data-for="monthly">&bull;</button>
+<button class="typebtn" data-type="event" data-for="monthly">&#9675;</button>
+<button class="typebtn" data-type="note" data-for="monthly">&ndash;</button>
+<input data-input="monthly" placeholder="할 일 추가…">
+</div>
+</div>
+</div>
+</section>
+<section class="panel" id="future">
+<div class="ph">Future Log</div>
+<div class="sub">이번 달 이후의 일들을 미리 모아둬요</div>
+<hr class="rule">
+<div class="future" id="futureGrid"></div>
+</section>
+<section class="panel" id="habit">
+<div class="ph">Tracker</div>
+<div class="sub">점을 채워 그날 지킨 습관을 기록해요</div>
+<hr class="rule">
+<div class="hwrap"><table class="htable" id="habitTable"></table></div>
+</section>
+<section class="panel" id="index">
+<div class="ph">Index</div>
+<div class="sub">어디에 무엇을 적었는지, 모은 것들(Collections)</div>
+<hr class="rule">
+<textarea class="note" data-note="index" placeholder="예) 독서 리스트 · 여행 계획 · 감사 일기 · 아이디어…"></textarea>
+</section>
+<section class="panel" id="key">
+<div class="ph">Key</div>
+<div class="sub">Rapid Logging — 기호 체계</div>
+<hr class="rule">
+<div class="key-grid">
+<div><span class="sym">&bull;</span> 할 일 (Task)</div>
+<div><span class="sym">완료</span> 완료 (Done)</div>
+<div><span class="sym">이동</span> 이동 (Migrated)</div>
+<div><span class="sym">예정</span> 예정 (Scheduled)</div>
+<div><span class="sym">&#9675;</span> 이벤트 (Event)</div>
+<div><span class="sym">&ndash;</span> 메모 (Note)</div>
+<div><span class="sym red">★</span> 우선순위 (Priority)</div>
+<div><span class="sym">~~</span> 취소선 (Irrelevant)</div>
+</div>
+<p class="hint" style="margin-top:14px">Ryder Carroll의 Bullet Journal Method를 따릅니다. 핵심은 빠르게, 짧게 적는 것.</p>
+</section>
+<footer>
+데이터는 클라우드에 자동 저장 (나만 볼 수 있어요) ·
+<button class="reset" id="reset">전체 초기화</button>
+</footer>
+</div>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyD58SEKBUCyg4Q6w2_tbw8MfsJivKr4jVU",
+  authDomain: "bullet-journal-b359c.firebaseapp.com",
+  projectId: "bullet-journal-b359c",
+  storageBucket: "bullet-journal-b359c.firebasestorage.app",
+  messagingSenderId: "79627536417",
+  appId: "1:79627536417:web:5812b77638d0be1baafb60"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const fdb = getFirestore(app);
+const provider = new GoogleAuthProvider();
+let db = {lists:{daily:[],monthly:[]}, notes:{}, habit:{}, cal:{}, future:{}};
+let uid = null; let saveTimer = null;
+const now=new Date(); const Y=now.getFullYear(), M=now.getMonth(), D=now.getDate();
 const wdK=['일','월','화','수','목','금','토'];
 const monthsK=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-
-document.getElementById('meta').textContent=`${Y} · ${monthsK[M]}`;
-document.getElementById('dailyDate').textContent=`${monthsK[M]} ${D}일 · ${wdK[now.getDay()]}요일`;
-document.getElementById('monthTitle').textContent=`${monthsK[M]} · Monthly Log`;
-
-/* tabs */
-document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-  t.classList.add('active');
-  document.getElementById(t.dataset.p).classList.add('active');
-});
-
-/* notes */
-document.querySelectorAll('[data-note]').forEach(el=>{
-  const k=el.dataset.note; el.value=db.notes[k]||'';
-  el.addEventListener('input',()=>{db.notes[k]=el.value;save();});
-});
-
-/* ---- rapid logging lists ---- */
-// item: {type:'task'|'event'|'note', status:'open'|'done'|'migrated'|'scheduled'|'strike', text, pri}
-const taskCycle=['open','done','migrated','scheduled','strike'];
-function glyph(it){
-  if(it.type==='note') return {ch:'–',red:false};
-  if(it.type==='event') return {ch: it.status==='done'?'✕':'○', red:false};
-  // task
-  switch(it.status){
-    case 'done': return {ch:'✕',red:false};
-    case 'migrated': return {ch:'›',red:true};
-    case 'scheduled': return {ch:'‹',red:true};
-    case 'strike': return {ch:'•',red:false};
-    default: return {ch:'•',red:false};
+function setSaveState(t){ document.getElementById('saveState').textContent=t; }
+function normalize(){ db.lists=db.lists||{daily:[],monthly:[]}; db.lists.daily=db.lists.daily||[]; db.lists.monthly=db.lists.monthly||[]; db.notes=db.notes||{}; db.habit=db.habit||{}; db.cal=db.cal||{}; db.future=db.future||{}; }
+async function cloudSave(){ if(!uid) return; setSaveState('저장 중…'); try{ await setDoc(doc(fdb,'journals',uid), {data: JSON.stringify(db), updated: Date.now()}); setSaveState('저장됨'); }catch(e){ setSaveState('저장 실패 (인터넷 확인)'); console.error(e); } }
+function save(){ if(saveTimer) clearTimeout(saveTimer); saveTimer=setTimeout(cloudSave,600); }
+document.getElementById('signInBtn').onclick=()=>signInWithPopup(auth,provider).catch(e=>alert('로그인 실패: '+e.message));
+document.getElementById('gateSignIn').onclick=()=>signInWithPopup(auth,provider).catch(e=>alert('로그인 실패: '+e.message));
+document.getElementById('signOutBtn').onclick=()=>signOut(auth);
+onAuthStateChanged(auth, async (user)=>{
+  if(user){
+    uid=user.uid;
+    document.getElementById('gate').style.display='none';
+    document.getElementById('appBody').style.display='block';
+    document.getElementById('signInBtn').style.display='none';
+    document.getElementById('signedIn').style.display='inline-flex';
+    document.getElementById('userName').textContent=user.displayName||user.email||'';
+    setSaveState('불러오는 중…');
+    try{ const snap=await getDoc(doc(fdb,'journals',uid)); if(snap.exists()&&snap.data().data){ db=JSON.parse(snap.data().data); } else { const legacy=localStorage.getItem('bujo_v2'); if(legacy){ try{ db=JSON.parse(legacy); }catch(e){} } } }catch(e){ console.error(e); }
+    normalize(); setSaveState('저장됨'); buildAll();
+  }else{
+    uid=null;
+    document.getElementById('gate').style.display='block';
+    document.getElementById('appBody').style.display='none';
+    document.getElementById('signInBtn').style.display='inline-block';
+    document.getElementById('signedIn').style.display='none';
   }
+});
+function buildAll(){
+  document.getElementById('meta').textContent=Y+' · '+monthsK[M];
+  document.getElementById('dailyDate').textContent=monthsK[M]+' '+D+'일 · '+wdK[now.getDay()]+'요일';
+  document.getElementById('monthTitle').textContent=monthsK[M]+' · Monthly Log';
+  document.querySelectorAll('[data-note]').forEach(el=>{ const k=el.dataset.note; el.value=db.notes[k]||''; el.oninput=()=>{db.notes[k]=el.value;save();}; });
+  ['daily','monthly'].forEach(name=>{ const inp=document.querySelector('[data-input="'+name+'"]'); inp.onkeydown=(e)=>{ if(e.key==='Enter')addItem(name); }; renderList(name); });
+  buildCal(); buildFuture(); buildHabit();
 }
-function statusClass(it){
-  if(it.type==='note') return '';
-  if(it.status==='done') return 's-done';
-  if(it.status==='strike') return 's-strike';
-  if(it.status==='migrated') return 's-migrated';
-  if(it.status==='scheduled') return 's-scheduled';
-  return '';
-}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active')); t.classList.add('active'); document.getElementById(t.dataset.p).classList.add('active'); });
+const taskCycle=['open','done','migrated','scheduled','strike'];
+function glyph(it){ if(it.type==='note') return {ch:'\u2013',red:false}; if(it.type==='event') return {ch: it.status==='done'?'\u2715':'\u25CB', red:false}; switch(it.status){ case 'done': return {ch:'\u2715',red:false}; case 'migrated': return {ch:'\u203A',red:true}; case 'scheduled': return {ch:'\u2039',red:true}; case 'strike': return {ch:'\u2022',red:false}; default: return {ch:'\u2022',red:false}; } }
+function statusClass(it){ if(it.type==='note') return ''; if(it.status==='done') return 's-done'; if(it.status==='strike') return 's-strike'; if(it.status==='migrated') return 's-migrated'; if(it.status==='scheduled') return 's-scheduled'; return ''; }
 function renderList(name){
-  const ul=document.querySelector(`[data-list="${name}"]`); ul.innerHTML='';
+  const ul=document.querySelector('[data-list="'+name+'"]'); ul.innerHTML='';
   db.lists[name].forEach((it,i)=>{
     const li=document.createElement('li');
-    const b=document.createElement('span'); b.className='bullet';
-    const g=glyph(it); b.textContent=g.ch; if(g.red)b.classList.add('red');
-    b.title='클릭: 상태 변경';
-    b.onclick=()=>{
-      if(it.type==='task'){
-        let idx=taskCycle.indexOf(it.status); it.status=taskCycle[(idx+1)%taskCycle.length];
-      }else if(it.type==='event'){
-        it.status = it.status==='done' ? 'open':'done';
-      }else{ // note: cycle nothing meaningful; toggle strike
-        it.status = it.status==='strike' ? 'open':'strike';
-      }
-      save(); renderList(name);
-    };
-    const star=document.createElement('span'); star.className='star'+(it.pri?' on':'');
-    star.textContent='★'; star.title='우선순위';
-    star.onclick=()=>{it.pri=!it.pri;save();renderList(name);};
-    const inp=document.createElement('input');
-    inp.className='itext '+statusClass(it); inp.value=it.text;
-    inp.oninput=()=>{it.text=inp.value;save();};
-    const del=document.createElement('button'); del.className='del'; del.textContent='×';
-    del.onclick=()=>{db.lists[name].splice(i,1);save();renderList(name);};
+    const b=document.createElement('span'); b.className='bullet'; const g=glyph(it); b.textContent=g.ch; if(g.red)b.classList.add('red'); b.title='클릭: 상태 변경';
+    b.onclick=()=>{ if(it.type==='task'){ let idx=taskCycle.indexOf(it.status); it.status=taskCycle[(idx+1)%taskCycle.length]; } else if(it.type==='event'){ it.status=it.status==='done'?'open':'done'; } else{ it.status=it.status==='strike'?'open':'strike'; } save(); renderList(name); };
+    const star=document.createElement('span'); star.className='star'+(it.pri?' on':''); star.textContent='\u2605'; star.title='우선순위'; star.onclick=()=>{it.pri=!it.pri;save();renderList(name);};
+    const inp=document.createElement('input'); inp.className='itext '+statusClass(it); inp.value=it.text; inp.oninput=()=>{it.text=inp.value;save();};
+    const del=document.createElement('button'); del.className='del'; del.textContent='\u00D7'; del.onclick=()=>{db.lists[name].splice(i,1);save();renderList(name);};
     li.append(b,star,inp,del); ul.appendChild(li);
   });
 }
-// type selector buttons
-document.querySelectorAll('.typebtn').forEach(btn=>{
-  btn.onclick=()=>{
-    const f=btn.dataset.for;
-    document.querySelectorAll(`.typebtn[data-for="${f}"]`).forEach(x=>x.classList.remove('sel'));
-    btn.classList.add('sel');
-  };
-});
-function selType(name){
-  const b=document.querySelector(`.typebtn.sel[data-for="${name}"]`);
-  return b?b.dataset.type:'task';
-}
-function addItem(name){
-  const inp=document.querySelector(`[data-input="${name}"]`);
-  const v=inp.value.trim(); if(!v)return;
-  db.lists[name].push({type:selType(name),status:'open',text:v,pri:false});
-  inp.value=''; save(); renderList(name);
-}
-['daily','monthly'].forEach(name=>{
-  document.querySelector(`[data-input="${name}"]`).addEventListener('keydown',e=>{
-    if(e.key==='Enter')addItem(name);
-  });
-  renderList(name);
-});
-
-/* ---- monthly calendar (vertical days) ---- */
-(function buildCal(){
-  const days=new Date(Y,M+1,0).getDate();
-  const ul=document.getElementById('calList');
-  for(let d=1;d<=days;d++){
-    const dow=new Date(Y,M,d).getDay();
-    const li=document.createElement('li'); if(d===D)li.classList.add('today');
-    const n=document.createElement('span'); n.className='dnum'; n.textContent=d;
-    const w=document.createElement('span'); w.className='dw'+(dow===0?' sun':''); w.textContent=wdK[dow];
-    const ev=document.createElement('input'); ev.className='dev';
-    const k='d'+d; ev.value=db.cal[k]||'';
-    ev.oninput=()=>{db.cal[k]=ev.value;save();};
-    li.append(n,w,ev); ul.appendChild(li);
-  }
-})();
-
-/* ---- future log: next 6 months ---- */
-(function buildFuture(){
-  const grid=document.getElementById('futureGrid');
-  for(let k=1;k<=6;k++){
-    const mi=(M+k)%12, yy=Y+Math.floor((M+k)/12);
-    const box=document.createElement('div'); box.className='fbox';
-    const h=document.createElement('h4'); h.textContent=monthsK[mi]+(yy!==Y?` '${String(yy).slice(2)}`:'');
-    const ta=document.createElement('textarea'); ta.className='note'; ta.style.minHeight='70px';
-    const key='f'+yy+'-'+mi; ta.value=db.future[key]||'';
-    ta.oninput=()=>{db.future[key]=ta.value;save();};
-    box.append(h,ta); grid.appendChild(box);
-  }
-})();
-
-/* ---- habit tracker ---- */
-(function buildHabit(){
-  const habits=['💧','🏃','📖','🧘','😴'];
-  const labels=['물','운동','독서','명상','수면'];
-  const days=new Date(Y,M+1,0).getDate();
-  const t=document.getElementById('habitTable');
-  let head='<thead><tr><th></th>'+habits.map((h,i)=>`<th>${h}<br>${labels[i]}</th>`).join('')+'</tr></thead>';
-  let body='<tbody>';
-  for(let d=1;d<=days;d++){
-    body+=`<tr><td class="d">${d}</td>`;
-    for(let h=0;h<habits.length;h++){
-      const key=`${d}-${h}`; const on=db.habit[key]?' on':'';
-      body+=`<td><div class="hdot${on}" data-h="${key}"></div></td>`;
-    }
-    body+='</tr>';
-  }
-  body+='</tbody>';
-  t.innerHTML=head+body;
-  t.querySelectorAll('.hdot').forEach(dot=>dot.onclick=()=>{
-    const k=dot.dataset.h; db.habit[k]=!db.habit[k]; dot.classList.toggle('on'); save();
-  });
-})();
-
-/* reset */
-document.getElementById('reset').onclick=()=>{
-  if(confirm('모든 기록을 지울까요?')){localStorage.removeItem(KEY);location.reload();}
-};
+document.querySelectorAll('.typebtn').forEach(btn=>{ btn.onclick=()=>{ const f=btn.dataset.for; document.querySelectorAll('.typebtn[data-for="'+f+'"]').forEach(x=>x.classList.remove('sel')); btn.classList.add('sel'); }; });
+function selType(name){ const b=document.querySelector('.typebtn.sel[data-for="'+name+'"]'); return b?b.dataset.type:'task'; }
+function addItem(name){ const inp=document.querySelector('[data-input="'+name+'"]'); const v=inp.value.trim(); if(!v)return; db.lists[name].push({type:selType(name),status:'open',text:v,pri:false}); inp.value=''; save(); renderList(name); }
+function buildCal(){ const days=new Date(Y,M+1,0).getDate(); const ul=document.getElementById('calList'); ul.innerHTML=''; for(let d=1;d<=days;d++){ const dow=new Date(Y,M,d).getDay(); const li=document.createElement('li'); if(d===D)li.classList.add('today'); const n=document.createElement('span'); n.className='dnum'; n.textContent=d; const w=document.createElement('span'); w.className='dw'+(dow===0?' sun':''); w.textContent=wdK[dow]; const ev=document.createElement('input'); ev.className='dev'; const k='d'+d; ev.value=db.cal[k]||''; ev.oninput=()=>{db.cal[k]=ev.value;save();}; li.append(n,w,ev); ul.appendChild(li); } }
+function buildFuture(){ const grid=document.getElementById('futureGrid'); grid.innerHTML=''; for(let k=1;k<=6;k++){ const mi=(M+k)%12, yy=Y+Math.floor((M+k)/12); const box=document.createElement('div'); box.className='fbox'; const h=document.createElement('h4'); h.textContent=monthsK[mi]+(yy!==Y?(' '+yy):''); const ta=document.createElement('textarea'); ta.className='note'; ta.style.minHeight='70px'; const key='f'+yy+'-'+mi; ta.value=db.future[key]||''; ta.oninput=()=>{db.future[key]=ta.value;save();}; box.append(h,ta); grid.appendChild(box); } }
+function buildHabit(){ const habits=['물','운동','독서','명상','수면']; const days=new Date(Y,M+1,0).getDate(); const t=document.getElementById('habitTable'); let head='<thead><tr><th></th>'+habits.map((h)=>'<th>'+h+'</th>').join('')+'</tr></thead>'; let body='<tbody>'; for(let d=1;d<=days;d++){ body+='<tr><td class="d">'+d+'</td>'; for(let h=0;h<habits.length;h++){ const key=d+'-'+h; const on=db.habit[key]?' on':''; body+='<td><div class="hdot'+on+'" data-h="'+key+'"></div></td>'; } body+='</tr>'; } body+='</tbody>'; t.innerHTML=head+body; t.querySelectorAll('.hdot').forEach(dot=>dot.onclick=()=>{ const k=dot.dataset.h; db.habit[k]=!db.habit[k]; dot.classList.toggle('on'); save(); }); }
+document.getElementById('reset').onclick=()=>{ if(confirm('모든 기록을 지울까요?')){ db={lists:{daily:[],monthly:[]}, notes:{}, habit:{}, cal:{}, future:{}}; save(); buildAll(); } };
 </script>
 </body>
 </html>
