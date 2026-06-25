@@ -81,6 +81,25 @@ footer{text-align:center;color:var(--ink-soft);font-size:14px;margin-top:18px;pa
 .gate h2{font-size:22px;margin-bottom:8px}
 .gate p{color:var(--ink-soft);font-size:14px;margin-bottom:20px}
 .savestate{font-size:11.5px;color:var(--ink-soft)}
+.minical{margin:6px 0 14px}
+.mc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.mc-title{font-size:14px;font-weight:700;color:var(--ink)}
+.mc-nav{display:flex;gap:4px}
+.navbtn{font-family:var(--sans);background:none;border:1px solid var(--rule);color:var(--ink-soft);min-width:26px;height:24px;border-radius:5px;cursor:pointer;font-size:14px;line-height:1;padding:0 6px}
+.navbtn:hover{border-color:var(--ink);color:var(--ink)}
+.mc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.mc-wd{text-align:center;font-size:11px;color:var(--ink-soft);padding:2px 0}
+.mc-wd.sun{color:var(--red)}
+.mc-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12.5px;color:var(--ink);border:1px solid transparent;border-radius:6px;cursor:pointer;position:relative}
+.mc-cell:hover{background:#e7dec9}
+.mc-cell.empty{cursor:default}
+.mc-cell.empty:hover{background:none}
+.mc-cell.today{border-color:var(--red);color:var(--red);font-weight:700}
+.mc-cell.sel{background:var(--ink);color:var(--paper)}
+.mc-cell.has::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--red)}
+.mc-cell.sel.has::after{background:var(--paper)}
+.mtitle-row{display:flex;align-items:center;gap:10px}
+.mtitle-row .ph{margin:0}
 </style>
 </head>
 <body>
@@ -111,6 +130,7 @@ footer{text-align:center;color:var(--ink-soft);font-size:14px;margin-top:18px;pa
 <section class="panel active" id="daily">
 <div class="ph" id="dailyDate">Daily Log</div>
 <hr class="rule">
+<div class="minical" id="miniCal"></div>
 <ul class="log" data-list="daily"></ul>
 <div class="adder">
 <button class="typebtn sel" data-type="task" data-for="daily">&bull;</button>
@@ -121,7 +141,7 @@ footer{text-align:center;color:var(--ink-soft);font-size:14px;margin-top:18px;pa
 <div class="hint">불릿을 눌러 상태를 바꿔요 · 완료/이동/예정 · 별표는 우선순위</div>
 </section>
 <section class="panel" id="monthly">
-<div class="ph" id="monthTitle">Monthly Log</div>
+<div class="mtitle-row"><button class="navbtn" id="monPrev" type="button">‹</button><div class="ph" id="monthTitle">Monthly Log</div><button class="navbtn" id="monNext" type="button">›</button></div>
 <hr class="rule">
 <div class="spread">
 <div>
@@ -196,13 +216,28 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const fdb = getFirestore(app);
 const provider = new GoogleAuthProvider();
-let db = {lists:{daily:[],monthly:[]}, notes:{}, habit:{}, cal:{}, future:{}};
+let db = {lists:{daily:[],monthly:[]}, days:{}, months:{}, notes:{}, habit:{}, cal:{}, cal2:{}, future:{}};
+let viewDaily=null; let viewMonth=null;
+function pad2(n){return n<10?'0'+n:''+n;}
+function dayKey(y,m,d){return y+'-'+pad2(m+1)+'-'+pad2(d);}
+function monKey(y,m){return y+'-'+m;}
 let uid = null; let saveTimer = null;
 const now=new Date(); const Y=now.getFullYear(), M=now.getMonth(), D=now.getDate();
 const wdK=['일','월','화','수','목','금','토'];
 const monthsK=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 function setSaveState(t){ document.getElementById('saveState').textContent=t; }
-function normalize(){ db.lists=db.lists||{daily:[],monthly:[]}; db.lists.daily=db.lists.daily||[]; db.lists.monthly=db.lists.monthly||[]; db.notes=db.notes||{}; db.habit=db.habit||{}; db.cal=db.cal||{}; db.future=db.future||{}; }
+function normalize(){
+  db.lists=db.lists||{daily:[],monthly:[]}; db.lists.daily=db.lists.daily||[]; db.lists.monthly=db.lists.monthly||[];
+  db.notes=db.notes||{}; db.habit=db.habit||{}; db.cal=db.cal||{}; db.future=db.future||{};
+  db.days=db.days||{}; db.months=db.months||{}; db.cal2=db.cal2||{};
+  // migrate legacy single daily list -> today
+  if(db.lists.daily.length){ const k=dayKey(Y,M,D); db.days[k]=(db.days[k]||[]).concat(db.lists.daily); db.lists.daily=[]; }
+  // migrate legacy single monthly list -> this month
+  if(db.lists.monthly.length){ const k=monKey(Y,M); db.months[k]=(db.months[k]||[]).concat(db.lists.monthly); db.lists.monthly=[]; }
+  // migrate legacy cal (d{day}, shared across months) -> this month's cal2 (c{Y}-{M}-{day})
+  for(const key in db.cal){ if(/^d\d+$/.test(key) && db.cal[key]){ const day=key.slice(1); const nk='c'+Y+'-'+M+'-'+day; if(db.cal2[nk]==null) db.cal2[nk]=db.cal[key]; } }
+  db.cal={};
+}
 async function cloudSave(){ if(!uid) return; setSaveState('저장 중…'); try{ await setDoc(doc(fdb,'journals',uid), {data: JSON.stringify(db), updated: Date.now()}); setSaveState('저장됨'); }catch(e){ setSaveState('저장 실패 (인터넷 확인)'); console.error(e); } }
 function save(){ if(saveTimer) clearTimeout(saveTimer); saveTimer=setTimeout(cloudSave,600); }
 document.getElementById('signInBtn').onclick=()=>signInWithPopup(auth,provider).catch(e=>alert('로그인 실패: '+e.message));
@@ -228,36 +263,69 @@ onAuthStateChanged(auth, async (user)=>{
   }
 });
 function buildAll(){
+  if(!viewDaily) viewDaily={y:Y,m:M,d:D};
+  if(viewMonth==null) viewMonth={y:Y,m:M};
   document.getElementById('meta').textContent=Y+' · '+monthsK[M];
-  document.getElementById('dailyDate').textContent=monthsK[M]+' '+D+'일 · '+wdK[now.getDay()]+'요일';
-  document.getElementById('monthTitle').textContent=monthsK[M]+' · Monthly Log';
   document.querySelectorAll('[data-note]').forEach(el=>{ const k=el.dataset.note; el.value=db.notes[k]||''; el.oninput=()=>{db.notes[k]=el.value;save();}; });
-  ['daily','monthly'].forEach(name=>{ const inp=document.querySelector('[data-input="'+name+'"]'); inp.onkeydown=(e)=>{ if(e.key==='Enter')addItem(name); }; renderList(name); });
-  buildCal(); buildFuture(); buildHabit();
+  const di=document.querySelector('[data-input="daily"]'); if(di) di.onkeydown=(e)=>{ if(e.key==='Enter')addItem('daily'); };
+  const mi=document.querySelector('[data-input="monthly"]'); if(mi) mi.onkeydown=(e)=>{ if(e.key==='Enter')addItem('monthly'); };
+  buildMiniCal(); renderDaily();
+  renderMonthly();
+  buildFuture(); buildHabit();
 }
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active')); t.classList.add('active'); document.getElementById(t.dataset.p).classList.add('active'); });
 const taskCycle=['open','done','migrated','scheduled','strike'];
 function glyph(it){ if(it.type==='note') return {ch:'\u2013',red:false}; if(it.type==='event') return {ch: it.status==='done'?'\u2715':'\u25CB', red:false}; switch(it.status){ case 'done': return {ch:'\u2715',red:false}; case 'migrated': return {ch:'\u203A',red:true}; case 'scheduled': return {ch:'\u2039',red:true}; case 'strike': return {ch:'\u2022',red:false}; default: return {ch:'\u2022',red:false}; } }
 function statusClass(it){ if(it.type==='note') return ''; if(it.status==='done') return 's-done'; if(it.status==='strike') return 's-strike'; if(it.status==='migrated') return 's-migrated'; if(it.status==='scheduled') return 's-scheduled'; return ''; }
+function curList(name){
+  if(name==='daily'){ const k=dayKey(viewDaily.y,viewDaily.m,viewDaily.d); db.days[k]=db.days[k]||[]; return db.days[k]; }
+  else { const k=monKey(viewMonth.y,viewMonth.m); db.months[k]=db.months[k]||[]; return db.months[k]; }
+}
+function renderDaily(){
+  const v=viewDaily, isToday=(v.y===Y&&v.m===M&&v.d===D);
+  document.getElementById('dailyDate').textContent=monthsK[v.m]+' '+v.d+'일 · '+wdK[new Date(v.y,v.m,v.d).getDay()]+'요일'+(isToday?' · 오늘':'');
+  renderList('daily');
+}
+function renderMonthly(){
+  document.getElementById('monthTitle').textContent=viewMonth.y+'년 '+monthsK[viewMonth.m]+' · Monthly Log';
+  buildCal(); renderList('monthly');
+}
+function shiftMonth(delta){ let m=viewMonth.m+delta, y=viewMonth.y; while(m<0){m+=12;y--;} while(m>11){m-=12;y++;} viewMonth={y,m}; renderMonthly(); }
+function buildMiniCal(){
+  const host=document.getElementById('miniCal'); if(!host) return;
+  const y=viewDaily.y, m=viewDaily.m;
+  const first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate();
+  let h='<div class="mc-head"><span class="mc-title">'+y+'년 '+monthsK[m]+'</span><span class="mc-nav"><button class="navbtn" id="mcPrev" type="button">‹</button><button class="navbtn" id="mcToday" type="button">오늘</button><button class="navbtn" id="mcNext" type="button">›</button></span></div><div class="mc-grid">';
+  for(let i=0;i<7;i++) h+='<div class="mc-wd'+(i===0?' sun':'')+'">'+wdK[i]+'</div>';
+  for(let i=0;i<first;i++) h+='<div class="mc-cell empty"></div>';
+  for(let d=1;d<=days;d++){ const isT=(y===Y&&m===M&&d===D), isS=(d===viewDaily.d), has=(db.days[dayKey(y,m,d)]||[]).length>0; h+='<div class="mc-cell'+(isT?' today':'')+(isS?' sel':'')+(has?' has':'')+'" data-d="'+d+'">'+d+'</div>'; }
+  h+='</div>'; host.innerHTML=h;
+  host.querySelectorAll('.mc-cell[data-d]').forEach(c=>c.onclick=()=>{ viewDaily={y,m,d:+c.dataset.d}; buildMiniCal(); renderDaily(); });
+  document.getElementById('mcPrev').onclick=()=>{ let nm=m-1,ny=y; if(nm<0){nm=11;ny--;} viewDaily={y:ny,m:nm,d:1}; buildMiniCal(); renderDaily(); };
+  document.getElementById('mcNext').onclick=()=>{ let nm=m+1,ny=y; if(nm>11){nm=0;ny++;} viewDaily={y:ny,m:nm,d:1}; buildMiniCal(); renderDaily(); };
+  document.getElementById('mcToday').onclick=()=>{ viewDaily={y:Y,m:M,d:D}; buildMiniCal(); renderDaily(); };
+}
 function renderList(name){
   const ul=document.querySelector('[data-list="'+name+'"]'); ul.innerHTML='';
-  db.lists[name].forEach((it,i)=>{
+  curList(name).forEach((it,i)=>{
     const li=document.createElement('li');
     const b=document.createElement('span'); b.className='bullet'; const g=glyph(it); b.textContent=g.ch; if(g.red)b.classList.add('red'); b.title='클릭: 상태 변경';
     b.onclick=()=>{ if(it.type==='task'){ let idx=taskCycle.indexOf(it.status); it.status=taskCycle[(idx+1)%taskCycle.length]; } else if(it.type==='event'){ it.status=it.status==='done'?'open':'done'; } else{ it.status=it.status==='strike'?'open':'strike'; } save(); renderList(name); };
     const star=document.createElement('span'); star.className='star'+(it.pri?' on':''); star.textContent='\u2605'; star.title='우선순위'; star.onclick=()=>{it.pri=!it.pri;save();renderList(name);};
     const inp=document.createElement('input'); inp.className='itext '+statusClass(it); inp.value=it.text; inp.oninput=()=>{it.text=inp.value;save();};
-    const del=document.createElement('button'); del.className='del'; del.textContent='\u00D7'; del.onclick=()=>{db.lists[name].splice(i,1);save();renderList(name);};
+    const del=document.createElement('button'); del.className='del'; del.textContent='\u00D7'; del.onclick=()=>{curList(name).splice(i,1);save();renderList(name);};
     li.append(b,star,inp,del); ul.appendChild(li);
   });
 }
 document.querySelectorAll('.typebtn').forEach(btn=>{ btn.onclick=()=>{ const f=btn.dataset.for; document.querySelectorAll('.typebtn[data-for="'+f+'"]').forEach(x=>x.classList.remove('sel')); btn.classList.add('sel'); }; });
 function selType(name){ const b=document.querySelector('.typebtn.sel[data-for="'+name+'"]'); return b?b.dataset.type:'task'; }
-function addItem(name){ const inp=document.querySelector('[data-input="'+name+'"]'); const v=inp.value.trim(); if(!v)return; db.lists[name].push({type:selType(name),status:'open',text:v,pri:false}); inp.value=''; save(); renderList(name); }
-function buildCal(){ const days=new Date(Y,M+1,0).getDate(); const ul=document.getElementById('calList'); ul.innerHTML=''; for(let d=1;d<=days;d++){ const dow=new Date(Y,M,d).getDay(); const li=document.createElement('li'); if(d===D)li.classList.add('today'); const n=document.createElement('span'); n.className='dnum'; n.textContent=d; const w=document.createElement('span'); w.className='dw'+(dow===0?' sun':''); w.textContent=wdK[dow]; const ev=document.createElement('input'); ev.className='dev'; const k='d'+d; ev.value=db.cal[k]||''; ev.oninput=()=>{db.cal[k]=ev.value;save();}; li.append(n,w,ev); ul.appendChild(li); } }
+function addItem(name){ const inp=document.querySelector('[data-input="'+name+'"]'); const v=inp.value.trim(); if(!v)return; curList(name).push({type:selType(name),status:'open',text:v,pri:false}); inp.value=''; save(); renderList(name); }
+function buildCal(){ const y=viewMonth.y, m=viewMonth.m; const days=new Date(y,m+1,0).getDate(); const ul=document.getElementById('calList'); ul.innerHTML=''; for(let d=1;d<=days;d++){ const dow=new Date(y,m,d).getDay(); const li=document.createElement('li'); if(y===Y&&m===M&&d===D)li.classList.add('today'); const n=document.createElement('span'); n.className='dnum'; n.textContent=d; const w=document.createElement('span'); w.className='dw'+(dow===0?' sun':''); w.textContent=wdK[dow]; const ev=document.createElement('input'); ev.className='dev'; const k='c'+y+'-'+m+'-'+d; ev.value=db.cal2[k]||''; ev.oninput=()=>{db.cal2[k]=ev.value;save();}; li.append(n,w,ev); ul.appendChild(li); } }
 function buildFuture(){ const grid=document.getElementById('futureGrid'); grid.innerHTML=''; for(let k=1;k<=6;k++){ const mi=(M+k)%12, yy=Y+Math.floor((M+k)/12); const box=document.createElement('div'); box.className='fbox'; const h=document.createElement('h4'); h.textContent=monthsK[mi]+(yy!==Y?(' '+yy):''); const ta=document.createElement('textarea'); ta.className='note'; ta.style.minHeight='70px'; const key='f'+yy+'-'+mi; ta.value=db.future[key]||''; ta.oninput=()=>{db.future[key]=ta.value;save();}; box.append(h,ta); grid.appendChild(box); } }
 function buildHabit(){ const habits=['물','운동','독서','명상','수면']; const days=new Date(Y,M+1,0).getDate(); const t=document.getElementById('habitTable'); let head='<thead><tr><th></th>'+habits.map((h)=>'<th>'+h+'</th>').join('')+'</tr></thead>'; let body='<tbody>'; for(let d=1;d<=days;d++){ body+='<tr><td class="d">'+d+'</td>'; for(let h=0;h<habits.length;h++){ const key=d+'-'+h; const on=db.habit[key]?' on':''; body+='<td><div class="hdot'+on+'" data-h="'+key+'"></div></td>'; } body+='</tr>'; } body+='</tbody>'; t.innerHTML=head+body; t.querySelectorAll('.hdot').forEach(dot=>dot.onclick=()=>{ const k=dot.dataset.h; db.habit[k]=!db.habit[k]; dot.classList.toggle('on'); save(); }); }
-document.getElementById('reset').onclick=()=>{ if(confirm('모든 기록을 지울까요?')){ db={lists:{daily:[],monthly:[]}, notes:{}, habit:{}, cal:{}, future:{}}; save(); buildAll(); } };
+document.getElementById('monPrev').onclick=()=>shiftMonth(-1);
+document.getElementById('monNext').onclick=()=>shiftMonth(1);
+document.getElementById('reset').onclick=()=>{ if(confirm('모든 기록을 지울까요?')){ db={lists:{daily:[],monthly:[]}, days:{}, months:{}, notes:{}, habit:{}, cal:{}, cal2:{}, future:{}}; save(); buildAll(); } };
 </script>
 </body>
 </html>
