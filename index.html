@@ -101,7 +101,7 @@ footer{text-align:center;color:var(--ink-soft);font-size:14px;margin-top:18px;pa
 .mc-cell.sel.has::after{background:var(--paper)}
 .mtitle-row{display:flex;align-items:center;gap:10px}
 .mtitle-row .ph{margin:0}
-.sched{position:relative;margin-top:6px;border-top:1.5px solid var(--ink);background:rgba(255,255,255,.22);user-select:none;touch-action:none}
+.sched{position:relative;margin-top:6px;border-top:1.5px solid var(--ink);background:rgba(255,255,255,.22);user-select:none;touch-action:pan-y}
 .slots{position:absolute;inset:0}
 .slot{position:absolute;left:0;right:0;border-top:1px solid #e7dfca}
 .slot.hour{border-top:1px solid #cabf9f}
@@ -119,6 +119,23 @@ footer{text-align:center;color:var(--ink-soft);font-size:14px;margin-top:18px;pa
 .block .rz-top{top:0}
 .block .rz-bot{bottom:0}
 .sched-hint{font-size:12px;color:var(--ink-soft);margin:6px 0 0}
+@media(max-width:640px){
+  body{padding:10px 6px 50px}
+  .book{padding:18px 14px 30px}
+  .book::before{display:none}
+  header.masthead{padding-left:0}
+  .authbar{position:static;justify-content:flex-end;margin-bottom:8px}
+  .masthead h1{font-size:23px}
+  nav.tabs{padding-left:0}
+  .panel{padding-left:0}
+  footer{padding-left:0}
+  .itext,.adder input,.dev,textarea.note,.block .binput{font-size:16px}
+  .block .rz{height:11px}
+  .block .bgrip{font-size:16px;padding:0 5px}
+  .block .btime{font-size:11px}
+  .block .bdel{font-size:17px;padding:0 4px}
+  .block .cdot{width:14px;height:14px}
+}
 </style>
 </head>
 <body>
@@ -368,7 +385,7 @@ function buildSlots(){ const slots=document.getElementById('slots'); const sched
 function schedList(){ const k=dayKey(viewDaily.y,viewDaily.m,viewDaily.d); db.sched[k]=db.sched[k]||[]; return db.sched[k]; }
 function blockDrag(handle,div,bk,mode){ handle.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); const startY=e.clientY, origS=bk.s, origE=bk.e, dur=origE-origS; div._ns=null; try{handle.setPointerCapture(e.pointerId);}catch(_){} function mv(ev){ const delta=Math.round((ev.clientY-startY)/SLOT); let s=origS,en=origE; if(mode==='move'){ s=origS+delta; en=origE+delta; if(s<0){s=0;en=dur;} if(en>NSLOT-1){en=NSLOT-1;s=en-dur;} } else if(mode==='top'){ s=Math.min(Math.max(0,origS+delta),origE); en=origE; } else { en=Math.max(Math.min(NSLOT-1,origE+delta),origS); s=origS; } div.style.top=(s*SLOT)+'px'; div.style.height=((en-s+1)*SLOT-2)+'px'; const tmx=div.querySelector('.btime'); if(tmx)tmx.textContent=slotTime(s)+'–'+slotTime(en+1); div._ns=s; div._ne=en; } function up(){ handle.removeEventListener('pointermove',mv); handle.removeEventListener('pointerup',up); handle.removeEventListener('pointercancel',up); if(div._ns!=null){ bk.s=div._ns; bk.e=div._ne; } save(); renderSched(); buildMiniCal(); } handle.addEventListener('pointermove',mv); handle.addEventListener('pointerup',up); handle.addEventListener('pointercancel',up); }); }
 function renderSched(){ const wrap=document.getElementById('blocks'); if(!wrap) return; wrap.innerHTML=''; schedList().slice().sort((a,b)=>a.s-b.s).forEach(bk=>{ const p=palette[(bk.color||0)%palette.length]; const div=document.createElement('div'); div.className='block'; div.dataset.blk=bk.id; div.style.top=(bk.s*SLOT)+'px'; div.style.height=((bk.e-bk.s+1)*SLOT-2)+'px'; div.style.background=p.fill; div.style.borderLeftColor=p.bar; const grip=document.createElement('span'); grip.className='bgrip'; grip.textContent='⠿'; grip.title='드래그해서 이동'; const dot=document.createElement('span'); dot.className='cdot'; dot.style.background=p.bar; dot.title='색상'; dot.onclick=()=>{bk.color=((bk.color||0)+1)%palette.length;save();renderSched();}; const tm=document.createElement('span'); tm.className='btime'; tm.textContent=slotTime(bk.s)+'–'+slotTime(bk.e+1); const inp=document.createElement('input'); inp.className='binput'; inp.value=bk.text||''; inp.placeholder='무엇을 했나요?'; inp.oninput=()=>{bk.text=inp.value;save();}; const del=document.createElement('button'); del.className='bdel'; del.textContent='×'; del.onclick=()=>{ const l=schedList(); const i=l.findIndex(x=>x.id===bk.id); if(i>-1)l.splice(i,1); save(); renderSched(); buildMiniCal(); }; const rzT=document.createElement('div'); rzT.className='rz rz-top'; const rzB=document.createElement('div'); rzB.className='rz rz-bot'; div.append(grip,dot,tm,inp,del,rzT,rzB); wrap.appendChild(div); blockDrag(grip,div,bk,'move'); blockDrag(rzT,div,bk,'top'); blockDrag(rzB,div,bk,'bottom'); }); }
-(function(){ const slots=document.getElementById('slots'); const selbox=document.getElementById('selbox'); if(!slots) return; let dragging=false, ds=0, de=0; function idxFromY(e){ const r=slots.getBoundingClientRect(); let y=e.clientY-r.top; y=Math.max(0,Math.min(r.height-1,y)); return Math.floor(y/SLOT); } function drawSel(){ const s=Math.min(ds,de), en=Math.max(ds,de); selbox.style.display='block'; selbox.style.top=(s*SLOT)+'px'; selbox.style.height=((en-s+1)*SLOT)+'px'; } slots.addEventListener('pointerdown',e=>{ dragging=true; ds=de=idxFromY(e); drawSel(); try{slots.setPointerCapture(e.pointerId);}catch(_){} }); slots.addEventListener('pointermove',e=>{ if(!dragging)return; de=idxFromY(e); drawSel(); }); function endDrag(){ if(!dragging)return; dragging=false; selbox.style.display='none'; const s=Math.min(ds,de), en=Math.max(ds,de); const l=schedList(); const bk={id:genId(),s,e:en,text:'',color:l.length%palette.length}; l.push(bk); save(); renderSched(); buildMiniCal(); const el=document.querySelector('[data-blk="'+bk.id+'"] .binput'); if(el)el.focus(); } slots.addEventListener('pointerup',endDrag); slots.addEventListener('pointercancel',endDrag); })();
+(function(){ const slots=document.getElementById('slots'); const selbox=document.getElementById('selbox'); if(!slots) return; let dragging=false, ds=0, de=0, y0=0, moved=false, touch=false; function idxFromY(e){ const r=slots.getBoundingClientRect(); let y=e.clientY-r.top; y=Math.max(0,Math.min(r.height-1,y)); return Math.floor(y/SLOT); } function drawSel(){ const s=Math.min(ds,de), en=Math.max(ds,de); selbox.style.display='block'; selbox.style.top=(s*SLOT)+'px'; selbox.style.height=((en-s+1)*SLOT)+'px'; } slots.addEventListener('pointerdown',e=>{ dragging=true; touch=(e.pointerType==='touch'); ds=de=idxFromY(e); y0=e.clientY; moved=false; if(!touch){ drawSel(); try{slots.setPointerCapture(e.pointerId);}catch(_){} } }); slots.addEventListener('pointermove',e=>{ if(!dragging)return; if(Math.abs(e.clientY-y0)>5) moved=true; if(!touch){ de=idxFromY(e); drawSel(); } }); function commit(){ if(!dragging)return; dragging=false; selbox.style.display='none'; let s,en; if(!moved){ s=ds; en=Math.min(ds+1,NSLOT-1); } else { s=Math.min(ds,de); en=Math.max(ds,de); } const l=schedList(); const bk={id:genId(),s,e:en,text:'',color:l.length%palette.length}; l.push(bk); save(); renderSched(); buildMiniCal(); const el=document.querySelector('[data-blk="'+bk.id+'"] .binput'); if(el && !touch) el.focus(); } function abort(){ dragging=false; selbox.style.display='none'; } slots.addEventListener('pointerup',commit); slots.addEventListener('pointercancel',abort); })();
 
 document.getElementById('monPrev').onclick=()=>shiftMonth(-1);
 document.getElementById('monNext').onclick=()=>shiftMonth(1);
