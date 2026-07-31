@@ -119,6 +119,31 @@ footer{text-align:center;color:var(--ink-soft);font-size:14px;margin-top:18px;pa
 .block .rz-top{top:0}
 .block .rz-bot{bottom:0}
 .sched-hint{font-size:12px;color:var(--ink-soft);margin:6px 0 0}
+.dnav{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.jtext{width:100%;min-height:320px;border:none;background:transparent;font-family:var(--sans);font-size:15px;color:var(--ink);resize:vertical;outline:none;line-height:30px;background-image:linear-gradient(transparent 29px, var(--rule) 30px);background-size:100% 30px;padding:0}
+.fut-head,.trk-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.fut-head .ph,.trk-head .ph{margin:0}
+.habit-edit{margin-top:16px;border-top:1px dashed var(--rule);padding-top:10px}
+.habit-edit h5{font-size:13px;font-weight:700;margin-bottom:8px;color:var(--ink-soft)}
+.he-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.he-row input{flex:1;border:none;border-bottom:1px solid var(--rule);background:transparent;font-family:var(--sans);font-size:14px;color:var(--ink);outline:none;padding:2px 0;max-width:240px}
+.he-row button{border:none;background:none;color:var(--ink-soft);cursor:pointer;font-size:17px;line-height:1;padding:0 4px}
+.he-add{font-family:var(--sans);background:var(--paper2);border:1px solid var(--rule);color:var(--ink);font-size:13px;padding:5px 12px;border-radius:6px;cursor:pointer;margin-top:6px}
+.he-add:hover{border-color:var(--ink)}
+#printArea{display:none}
+@media print{
+  body{background:#fff;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .book,.gate{display:none !important}
+  #printArea{display:block;padding:16px;color:#000;font-family:var(--sans)}
+  #printArea h2{font-size:20px;margin:0 0 8px}
+  #printArea h3{font-size:14px;margin:16px 0 4px;border-bottom:1px solid #000;padding-bottom:2px}
+  #printArea .pd{margin:8px 0;page-break-inside:avoid}
+  #printArea .pdt{font-weight:700;font-size:12.5px}
+  #printArea ul{list-style:none;padding-left:0;margin:2px 0}
+  #printArea li{font-size:12px;padding:1px 0}
+  #printArea table{width:100%;border-collapse:collapse;font-size:10px;margin-top:6px}
+  #printArea th,#printArea td{border:1px solid #999;padding:2px;text-align:center}
+}
 @media(max-width:640px){
   body{padding:10px 6px 50px}
   .book{padding:18px 14px 30px}
@@ -129,7 +154,7 @@ footer{text-align:center;color:var(--ink-soft);font-size:14px;margin-top:18px;pa
   nav.tabs{padding-left:0}
   .panel{padding-left:0}
   footer{padding-left:0}
-  .itext,.adder input,.dev,textarea.note,.block .binput{font-size:16px}
+  .itext,.adder input,.dev,textarea.note,.block .binput,.jtext,.he-row input{font-size:16px}
   .block .rz{height:11px}
   .block .bgrip{font-size:16px;padding:0 5px}
   .block .btime{font-size:11px}
@@ -160,6 +185,7 @@ footer{text-align:center;color:var(--ink-soft);font-size:14px;margin-top:18px;pa
 <button class="tab" data-p="monthly">Monthly</button>
 <button class="tab" data-p="future">Future</button>
 <button class="tab" data-p="habit">Tracker</button>
+<button class="tab" data-p="journal">Journal</button>
 <button class="tab" data-p="index">Index</button>
 <button class="tab" data-p="key">Key</button>
 </nav>
@@ -205,16 +231,22 @@ footer{text-align:center;color:var(--ink-soft);font-size:14px;margin-top:18px;pa
 </div>
 </section>
 <section class="panel" id="future">
-<div class="ph">Future Log</div>
-<div class="sub">이번 달 이후의 일들을 미리 모아둬요</div>
+<div class="fut-head"><button class="navbtn" id="futPrev" type="button">‹</button><div class="ph" id="futureTitle">Future Log</div><button class="navbtn" id="futNext" type="button">›</button><button class="navbtn" id="futToday" type="button">현재</button></div>
+<div class="sub">앞으로(또는 지난) 달의 일들을 모아둬요</div>
 <hr class="rule">
 <div class="future" id="futureGrid"></div>
 </section>
 <section class="panel" id="habit">
-<div class="ph">Tracker</div>
+<div class="trk-head"><button class="navbtn" id="trkPrev" type="button">‹</button><div class="ph" id="trackerTitle">Tracker</div><button class="navbtn" id="trkNext" type="button">›</button><button class="navbtn" id="trkToday" type="button">이번 달</button></div>
 <div class="sub">점을 채워 그날 지킨 습관을 기록해요</div>
 <hr class="rule">
 <div class="hwrap"><table class="htable" id="habitTable"></table></div>
+<div class="habit-edit"><h5>습관 항목 편집</h5><div id="habitEditList"></div><button class="he-add" id="habitAdd">＋ 항목 추가</button></div>
+</section>
+<section class="panel" id="journal">
+<div class="dnav"><button class="navbtn" id="jPrev" type="button">‹</button><div class="ph" id="journalDate" style="margin:0">Journal</div><button class="navbtn" id="jNext" type="button">›</button><button class="navbtn" id="jToday" type="button">오늘</button></div>
+<hr class="rule">
+<textarea class="jtext" id="journalText" placeholder="오늘 하루는 어땠나요? 자유롭게 적어보세요."></textarea>
 </section>
 <section class="panel" id="index">
 <div class="ph">Index</div>
@@ -240,10 +272,12 @@ footer{text-align:center;color:var(--ink-soft);font-size:14px;margin-top:18px;pa
 </section>
 <footer>
 데이터는 클라우드에 자동 저장 (나만 볼 수 있어요) ·
+<button class="reset" id="exportPdf">📄 PDF 내보내기</button> ·
 <button class="reset" id="reset">전체 초기화</button>
 </footer>
 </div>
 </div>
+<div id="printArea"></div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -260,8 +294,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const fdb = getFirestore(app);
 const provider = new GoogleAuthProvider();
-let db = {lists:{daily:[],monthly:[]}, days:{}, months:{}, sched:{}, notes:{}, habit:{}, cal:{}, cal2:{}, future:{}};
-let viewDaily=null; let viewMonth=null;
+let db = {lists:{daily:[],monthly:[]}, days:{}, months:{}, sched:{}, notes:{}, habit:{}, habitLog:{}, habits:null, journal:{}, cal:{}, cal2:{}, future:{}};
+let viewDaily=null; let viewMonth=null; let viewJournal=null; let viewFuture=null; let viewHabit=null;
+function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function pad2(n){return n<10?'0'+n:''+n;}
 function dayKey(y,m,d){return y+'-'+pad2(m+1)+'-'+pad2(d);}
 function monKey(y,m){return y+'-'+m;}
@@ -282,6 +317,12 @@ function normalize(){
   // migrate legacy cal (d{day}, shared across months) -> this month's cal2 (c{Y}-{M}-{day})
   for(const key in db.cal){ if(/^d\d+$/.test(key) && db.cal[key]){ const day=key.slice(1); const nk='c'+Y+'-'+M+'-'+day; if(db.cal2[nk]==null) db.cal2[nk]=db.cal[key]; } }
   db.cal={};
+  db.journal=db.journal||{}; db.habitLog=db.habitLog||{};
+  if(!db.habits||!db.habits.length){ db.habits=[{id:genId(),name:'물'},{id:genId(),name:'운동'},{id:genId(),name:'독서'},{id:genId(),name:'명상'},{id:genId(),name:'수면'}]; }
+  // migrate legacy habit (`${d}-${h}` index-based, current month) -> habitLog keyed by dayKey|habitId
+  let migH=false;
+  for(const key in db.habit){ const mt=/^(\d+)-(\d+)$/.exec(key); if(mt && db.habit[key]){ const d=+mt[1], h=+mt[2], hb=db.habits[h]; if(hb){ db.habitLog[dayKey(Y,M,d)+'|'+hb.id]=true; migH=true; } } }
+  if(migH) db.habit={};
 }
 async function cloudSave(){ if(!uid) return; setSaveState('저장 중…'); try{ await setDoc(doc(fdb,'journals',uid), {data: JSON.stringify(db), updated: Date.now()}); setSaveState('저장됨'); }catch(e){ setSaveState('저장 실패 (인터넷 확인)'); console.error(e); } }
 function save(){ if(saveTimer) clearTimeout(saveTimer); saveTimer=setTimeout(cloudSave,600); }
@@ -310,6 +351,9 @@ onAuthStateChanged(auth, async (user)=>{
 function buildAll(){
   if(!viewDaily) viewDaily={y:Y,m:M,d:D};
   if(viewMonth==null) viewMonth={y:Y,m:M};
+  if(viewJournal==null) viewJournal={y:Y,m:M,d:D};
+  if(viewFuture==null) viewFuture={y:Y,m:M};
+  if(viewHabit==null) viewHabit={y:Y,m:M};
   document.getElementById('meta').textContent=Y+' · '+monthsK[M];
   document.querySelectorAll('[data-note]').forEach(el=>{ const k=el.dataset.note; el.value=db.notes[k]||''; el.oninput=()=>{db.notes[k]=el.value;save();}; });
   const di=document.querySelector('[data-input="daily"]'); if(di) di.onkeydown=(e)=>{ if(e.key==='Enter')addItem('daily'); };
@@ -317,7 +361,7 @@ function buildAll(){
   buildSlots();
   buildMiniCal(); renderDaily();
   renderMonthly();
-  buildFuture(); buildHabit();
+  buildFuture(); buildHabit(); renderJournal();
 }
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active')); t.classList.add('active'); document.getElementById(t.dataset.p).classList.add('active'); });
 const taskCycle=['open','done','migrated','scheduled','strike'];
@@ -373,8 +417,16 @@ document.querySelectorAll('.typebtn').forEach(btn=>{ btn.onclick=()=>{ const f=b
 function selType(name){ const b=document.querySelector('.typebtn.sel[data-for="'+name+'"]'); return b?b.dataset.type:'task'; }
 function addItem(name){ const inp=document.querySelector('[data-input="'+name+'"]'); const v=inp.value.trim(); if(!v)return; curList(name).push({type:selType(name),status:'open',text:v,pri:false}); inp.value=''; save(); if(name==='daily'){renderList('daily');buildMiniCal();} else renderList(name); }
 function buildCal(){ const y=viewMonth.y, m=viewMonth.m; const days=new Date(y,m+1,0).getDate(); const ul=document.getElementById('calList'); ul.innerHTML=''; for(let d=1;d<=days;d++){ const dow=new Date(y,m,d).getDay(); const li=document.createElement('li'); if(y===Y&&m===M&&d===D)li.classList.add('today'); const n=document.createElement('span'); n.className='dnum'; n.textContent=d; const w=document.createElement('span'); w.className='dw'+(dow===0?' sun':''); w.textContent=wdK[dow]; const ev=document.createElement('input'); ev.className='dev'; const k='c'+y+'-'+m+'-'+d; ev.value=db.cal2[k]||''; ev.oninput=()=>{db.cal2[k]=ev.value;save();}; li.append(n,w,ev); ul.appendChild(li); } }
-function buildFuture(){ const grid=document.getElementById('futureGrid'); grid.innerHTML=''; for(let k=1;k<=6;k++){ const mi=(M+k)%12, yy=Y+Math.floor((M+k)/12); const box=document.createElement('div'); box.className='fbox'; const h=document.createElement('h4'); h.textContent=monthsK[mi]+(yy!==Y?(' '+yy):''); const ta=document.createElement('textarea'); ta.className='note'; ta.style.minHeight='70px'; const key='f'+yy+'-'+mi; ta.value=db.future[key]||''; ta.oninput=()=>{db.future[key]=ta.value;save();}; box.append(h,ta); grid.appendChild(box); } }
-function buildHabit(){ const habits=['물','운동','독서','명상','수면']; const days=new Date(Y,M+1,0).getDate(); const t=document.getElementById('habitTable'); let head='<thead><tr><th></th>'+habits.map((h)=>'<th>'+h+'</th>').join('')+'</tr></thead>'; let body='<tbody>'; for(let d=1;d<=days;d++){ body+='<tr><td class="d">'+d+'</td>'; for(let h=0;h<habits.length;h++){ const key=d+'-'+h; const on=db.habit[key]?' on':''; body+='<td><div class="hdot'+on+'" data-h="'+key+'"></div></td>'; } body+='</tr>'; } body+='</tbody>'; t.innerHTML=head+body; t.querySelectorAll('.hdot').forEach(dot=>dot.onclick=()=>{ const k=dot.dataset.h; db.habit[k]=!db.habit[k]; dot.classList.toggle('on'); save(); }); }
+function buildFuture(){ const grid=document.getElementById('futureGrid'); grid.innerHTML=''; const startAbs=viewFuture.y*12+viewFuture.m; for(let k=0;k<6;k++){ const abs=startAbs+k, yy=Math.floor(abs/12), mi=abs%12; const box=document.createElement('div'); box.className='fbox'; const h=document.createElement('h4'); h.textContent=monthsK[mi]+' '+yy; const ta=document.createElement('textarea'); ta.className='note'; ta.style.minHeight='70px'; const key='f'+yy+'-'+mi; ta.value=db.future[key]||''; ta.oninput=()=>{ if(ta.value) db.future[key]=ta.value; else delete db.future[key]; save(); }; box.append(h,ta); grid.appendChild(box); } const eAbs=startAbs+5, ey=Math.floor(eAbs/12), em=eAbs%12; document.getElementById('futureTitle').textContent=viewFuture.y+'년 '+monthsK[viewFuture.m]+' – '+(ey!==viewFuture.y?ey+'년 ':'')+monthsK[em]; }
+function shiftFuture(delta){ let abs=viewFuture.y*12+viewFuture.m+delta*6; viewFuture={y:Math.floor(abs/12),m:((abs%12)+12)%12}; buildFuture(); }
+function habitLogKey(y,m,d,hid){ return dayKey(y,m,d)+'|'+hid; }
+function buildHabit(){ const y=viewHabit.y, m=viewHabit.m; document.getElementById('trackerTitle').textContent=y+'년 '+monthsK[m]+' · Tracker'; const habits=db.habits; const days=new Date(y,m+1,0).getDate(); const t=document.getElementById('habitTable'); let head='<thead><tr><th></th>'+habits.map(hb=>'<th>'+esc(hb.name)+'</th>').join('')+'</tr></thead>'; let body='<tbody>'; for(let d=1;d<=days;d++){ const isT=(y===Y&&m===M&&d===D); body+='<tr'+(isT?' style="background:rgba(168,68,58,.08)"':'')+'><td class="d">'+d+'</td>'; for(const hb of habits){ const key=habitLogKey(y,m,d,hb.id); const on=db.habitLog[key]?' on':''; body+='<td><div class="hdot'+on+'" data-k="'+key+'"></div></td>'; } body+='</tr>'; } body+='</tbody>'; t.innerHTML=head+body; t.querySelectorAll('.hdot').forEach(dot=>dot.onclick=()=>{ const k=dot.dataset.k; if(db.habitLog[k]) delete db.habitLog[k]; else db.habitLog[k]=true; dot.classList.toggle('on'); save(); }); buildHabitEdit(); }
+function buildHabitEdit(){ const host=document.getElementById('habitEditList'); if(!host) return; host.innerHTML=''; db.habits.forEach((hb,i)=>{ const row=document.createElement('div'); row.className='he-row'; const inp=document.createElement('input'); inp.value=hb.name; inp.oninput=()=>{hb.name=inp.value;save();}; inp.onchange=()=>buildHabit(); const del=document.createElement('button'); del.textContent='×'; del.title='삭제'; del.onclick=()=>{ if(confirm('"'+hb.name+'" 항목을 삭제할까요? (이 항목의 체크 기록도 사라져요)')){ db.habits.splice(i,1); save(); buildHabit(); } }; row.append(inp,del); host.appendChild(row); }); }
+function shiftHabit(delta){ let m=viewHabit.m+delta, y=viewHabit.y; while(m<0){m+=12;y--;} while(m>11){m-=12;y++;} viewHabit={y,m}; buildHabit(); }
+function renderJournal(){ const v=viewJournal, isT=(v.y===Y&&v.m===M&&v.d===D); document.getElementById('journalDate').textContent=v.y+'년 '+monthsK[v.m]+' '+v.d+'일 · '+wdK[new Date(v.y,v.m,v.d).getDay()]+'요일'+(isT?' · 오늘':''); const ta=document.getElementById('journalText'); const k=dayKey(v.y,v.m,v.d); ta.value=db.journal[k]||''; ta.oninput=()=>{ if(ta.value) db.journal[k]=ta.value; else delete db.journal[k]; save(); }; }
+function shiftJournal(delta){ const nd=new Date(viewJournal.y,viewJournal.m,viewJournal.d+delta); viewJournal={y:nd.getFullYear(),m:nd.getMonth(),d:nd.getDate()}; renderJournal(); }
+function glyphText(it){ if(it.type==='note')return '–'; if(it.type==='event')return it.status==='done'?'✓○':'○'; switch(it.status){case 'done':return '✓';case 'migrated':return '›';case 'scheduled':return '‹';case 'strike':return '✗';default:return '•';} }
+function exportPDF(){ const y=viewMonth.y, m=viewMonth.m; const days=new Date(y,m+1,0).getDate(); const P=[]; P.push('<h2>'+y+'년 '+monthsK[m]+' · Bullet Journal</h2>'); const mtasks=db.months[monKey(y,m)]||[]; if(mtasks.length){ P.push('<h3>Monthly Log</h3><ul>'); mtasks.forEach(it=>P.push('<li>'+glyphText(it)+' '+esc(it.text)+(it.pri?' ★':'')+'</li>')); P.push('</ul>'); } const dayParts=[]; for(let d=1;d<=days;d++){ const k=dayKey(y,m,d); const tasks=db.days[k]||[]; const sc=(db.sched[k]||[]).slice().sort((a,b)=>a.s-b.s); const jr=db.journal[k]; const cal=db.cal2['c'+y+'-'+m+'-'+d]; if(!tasks.length&&!sc.length&&!jr&&!cal) continue; let s='<div class="pd"><div class="pdt">'+(m+1)+'/'+d+' ('+wdK[new Date(y,m,d).getDay()]+')</div>'; if(cal) s+='<div style="font-size:12px">· '+esc(cal)+'</div>'; if(tasks.length){ s+='<ul>'; tasks.forEach(it=>s+='<li>'+glyphText(it)+' '+esc(it.text)+(it.pri?' ★':'')+'</li>'); s+='</ul>'; } if(sc.length){ s+='<ul>'; sc.forEach(bk=>s+='<li>⏱ '+slotTime(bk.s)+'–'+slotTime(bk.e+1)+'  '+esc(bk.text||'')+'</li>'); s+='</ul>'; } if(jr){ s+='<div style="white-space:pre-wrap;font-size:12px;margin-top:3px">'+esc(jr)+'</div>'; } s+='</div>'; dayParts.push(s); } if(dayParts.length){ P.push('<h3>Daily</h3>'); P.push(dayParts.join('')); } const habits=db.habits||[]; if(habits.length){ P.push('<h3>Tracker</h3><table><thead><tr><th></th>'); habits.forEach(hb=>P.push('<th>'+esc(hb.name)+'</th>')); P.push('</tr></thead><tbody>'); for(let d=1;d<=days;d++){ P.push('<tr><td>'+d+'</td>'); habits.forEach(hb=>{ const on=db.habitLog[habitLogKey(y,m,d,hb.id)]; P.push('<td>'+(on?'●':'')+'</td>'); }); P.push('</tr>'); } P.push('</tbody></table>'); } document.getElementById('printArea').innerHTML=P.join(''); window.print(); }
 
 /* ---- time-block schedule ---- */
 const SLOT=26, START_H=6, END_H=24, STEP=30, NSLOT=(END_H-START_H)*(60/STEP);
@@ -389,7 +441,18 @@ function renderSched(){ const wrap=document.getElementById('blocks'); if(!wrap) 
 
 document.getElementById('monPrev').onclick=()=>shiftMonth(-1);
 document.getElementById('monNext').onclick=()=>shiftMonth(1);
-document.getElementById('reset').onclick=()=>{ if(confirm('모든 기록을 지울까요?')){ db={lists:{daily:[],monthly:[]}, days:{}, months:{}, sched:{}, notes:{}, habit:{}, cal:{}, cal2:{}, future:{}}; save(); buildAll(); } };
+document.getElementById('jPrev').onclick=()=>shiftJournal(-1);
+document.getElementById('jNext').onclick=()=>shiftJournal(1);
+document.getElementById('jToday').onclick=()=>{ viewJournal={y:Y,m:M,d:D}; renderJournal(); };
+document.getElementById('futPrev').onclick=()=>shiftFuture(-1);
+document.getElementById('futNext').onclick=()=>shiftFuture(1);
+document.getElementById('futToday').onclick=()=>{ viewFuture={y:Y,m:M}; buildFuture(); };
+document.getElementById('trkPrev').onclick=()=>shiftHabit(-1);
+document.getElementById('trkNext').onclick=()=>shiftHabit(1);
+document.getElementById('trkToday').onclick=()=>{ viewHabit={y:Y,m:M}; buildHabit(); };
+document.getElementById('habitAdd').onclick=()=>{ db.habits.push({id:genId(),name:'새 습관'}); save(); buildHabit(); };
+document.getElementById('exportPdf').onclick=exportPDF;
+document.getElementById('reset').onclick=()=>{ if(confirm('모든 기록을 지울까요?')){ db={lists:{daily:[],monthly:[]}, days:{}, months:{}, sched:{}, notes:{}, habit:{}, habitLog:{}, habits:[{id:genId(),name:'물'},{id:genId(),name:'운동'},{id:genId(),name:'독서'},{id:genId(),name:'명상'},{id:genId(),name:'수면'}], journal:{}, cal:{}, cal2:{}, future:{}}; save(); buildAll(); } };
 </script>
 </body>
 </html>
