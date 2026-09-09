@@ -3,6 +3,39 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {clone,emptyJournal,mergeJournal,resolveJournal,validateJournal,moveTask,previousOpenTasks,journalEntryDates} from '../journal-core.mjs';
 import {createJournalSync} from '../journal-sync.mjs';
+import {weekDates,scheduleKind,scheduleItems,saveSchedule,slotTime} from '../schedule.mjs';
+
+const dateKey=date=>date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
+test('Weekly is Monday to Sunday across a year boundary, including Sunday selection',()=>{
+  const expected=['2025-12-29','2025-12-30','2025-12-31','2026-01-01','2026-01-02','2026-01-03','2026-01-04'];
+  assert.deepEqual(weekDates(new Date(2026,0,1)).map(dateKey),expected);
+  assert.deepEqual(weekDates(new Date(2026,0,4)).map(dateKey),expected);
+});
+test('Weekly includes leap day and stays consecutive through daylight-saving week',()=>{
+  assert.ok(weekDates(new Date(2024,1,29)).map(dateKey).includes('2024-02-29'));
+  assert.deepEqual(weekDates(new Date(2026,2,29)).map(dateKey),['2026-03-23','2026-03-24','2026-03-25','2026-03-26','2026-03-27','2026-03-28','2026-03-29']);
+});
+test('legacy schedule is actual without migration or duplicate entries',()=>{
+  const data=emptyJournal();const legacy={id:'legacy',s:2,e:3,text:'지난 기록',color:0};data.sched['2026-09-09']=[legacy];
+  assert.equal(scheduleKind(legacy),'actual');assert.equal(scheduleItems(data,'2026-09-09','actual')[0],legacy);
+  assert.equal(scheduleItems(data,'2026-09-09','plan').length,0);assert.equal(legacy.kind,undefined);assert.deepEqual(validateJournal(data),data);
+});
+test('daily and weekly share edits, lane changes, deletion and backup records',()=>{
+  const data=emptyJournal(),key='2026-09-09';
+  saveSchedule(data,key,{id:'one',kind:'plan',s:0,e:1,text:'계획',color:2});
+  const weekly=scheduleItems(data,key,'plan');assert.equal(weekly[0].text,'계획');
+  saveSchedule(data,key,{...weekly[0],kind:'actual',s:2,e:4,text:'실제'});
+  assert.equal(scheduleItems(data,key,'plan').length,0);assert.equal(scheduleItems(data,key,'actual')[0].text,'실제');
+  const restored=validateJournal(JSON.parse(JSON.stringify(data)));assert.equal(scheduleItems(restored,key,'actual')[0].e,4);
+  data.sched[key]=data.sched[key].filter(b=>b.id!=='one');assert.equal(scheduleItems(data,key,'actual').length,0);
+});
+test('schedule range rejects reversed times and supports midnight endpoint',()=>{
+  const data=emptyJournal(),block={id:'end',kind:'actual',s:35,e:35,text:'마무리',color:0};
+  saveSchedule(data,'2026-09-09',block);assert.equal(slotTime(36),'24:00');
+  assert.throws(()=>saveSchedule(data,'2026-09-09',{...block,s:5,e:4}));
+  assert.throws(()=>saveSchedule(data,'2026-09-09',{...block,e:36}));
+  assert.throws(()=>validateJournal({...data,sched:{today:[{...block,kind:'other'}]}}));
+});
 
 const task = text => ({type:'task',status:'open',text,pri:false});
 test('journal calendar finds text, reflection and photo-only dates without empty drafts',()=>{

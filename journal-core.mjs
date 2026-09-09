@@ -63,6 +63,7 @@ export function validateJournal(data) {
     for (const list of Object.values(map || {})) if (!Array.isArray(list) || !list.every(item)) throw new Error('할 일 목록 형식 오류');
   }
   for (const list of Object.values(data.sched || {})) {
+    if (Array.isArray(list) && list.some(b => b && b.kind != null && !['plan','actual'].includes(b.kind))) throw new Error('계획/실제 구분 오류');
     if (!Array.isArray(list) || !list.every(b => object(b) && safeId(b.id) && Number.isInteger(b.s) && Number.isInteger(b.e) && b.s >= 0 && b.e >= b.s && b.e < 36 && typeof b.text === 'string' && (b.color == null || (Number.isInteger(b.color) && b.color >= 0)))) throw new Error('시간표 형식 오류');
   }
   for (const map of [data.notes, data.journal, data.reflections, data.cal, data.cal2, data.future]) {

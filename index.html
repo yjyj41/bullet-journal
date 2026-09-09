@@ -211,6 +211,26 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 .journal-sidebar .hint{font-size:12px;line-height:1.6}.journal-editor .dnav{gap:6px}.journal-editor .dnav .ph{flex:1;line-height:1.4}
 @media(min-width:1000px){body{padding:24px 28px 60px}.book{padding:30px 38px 44px}.spread{gap:40px}.future{grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}.journal-layout{gap:40px}nav.tabs{gap:6px}}
 @media(max-width:899px){.journal-layout{grid-template-columns:1fr;gap:22px}.journal-sidebar{position:static;max-width:420px;width:100%}.journal-editor .jtext{min-height:320px}}
+
+.schedule-scroll{overflow-x:auto;margin-top:14px;padding-bottom:6px;overscroll-behavior-x:contain}
+.schedule-grid{--day-count:1;display:grid;grid-template-columns:44px repeat(var(--day-count),minmax(0,1fr));align-items:start;min-width:330px;border:1px solid var(--rule);background:rgba(255,255,255,.18)}
+.schedule-grid.weekly-grid{grid-template-columns:44px repeat(7,minmax(148px,1fr));min-width:1080px}
+.schedule-corner{height:70px;padding-top:44px;font-size:11px;color:var(--ink-soft);text-align:center;border-bottom:1px solid var(--rule)}
+.schedule-day-head{height:70px;border-left:1px solid var(--rule);background:var(--paper2)}.schedule-day-head.is-today{box-shadow:inset 0 3px var(--red)}
+.schedule-date{display:block;text-align:center;width:100%;height:32px;font-size:14px;font-weight:700;background:none;border:0;color:var(--ink)}button.schedule-date{cursor:pointer}
+.schedule-labels{display:grid;grid-template-columns:1fr 1fr;height:38px}.schedule-labels button{font-size:13px;color:var(--ink);border:0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);background:none;cursor:pointer}.schedule-labels button+button{border-left:1px solid var(--rule)}
+.schedule-ruler{height:936px;position:relative}.schedule-ruler span{position:absolute;left:3px;font-size:10px;color:var(--ink-soft)}
+.schedule-day{display:grid;grid-template-columns:1fr 1fr;height:936px;border-left:1px solid var(--rule);min-width:0}
+.schedule-lane{position:relative;min-width:0;height:936px;touch-action:pan-x pan-y;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 25px,var(--rule) 25px,var(--rule) 26px);background-size:100% 52px}
+.schedule-lane.actual{border-left:1px solid var(--ink-soft);background-color:rgba(255,255,255,.16)}
+.schedule-selection{position:absolute;inset-inline:2px;pointer-events:none;background:rgba(52,48,42,.15);border:1px dashed var(--ink);z-index:5}
+.schedule-block{position:absolute;left:2px;right:2px;min-height:24px;border-left:3px solid #a8443a;background:#e9d5c9;border-radius:3px;overflow:hidden;box-shadow:0 1px 2px var(--shadow)}
+.schedule-block.color-1{border-color:#6f8a52;background:#dde2ca}.schedule-block.color-2{border-color:#4f7d8f;background:#d5e1df}.schedule-block.color-3{border-color:#a07a3c;background:#e9ddbd}.schedule-block.color-4{border-color:#8a5f86;background:#e6d8e2}
+.schedule-block-edit{display:block;width:100%;height:100%;text-align:left;border:0;background:transparent;padding:7px 17px 7px 5px;font-size:13px;line-height:1.35;color:var(--ink);cursor:pointer;overflow:hidden;overflow-wrap:anywhere}.schedule-block-edit span{white-space:pre-wrap}.schedule-block-edit small{display:block;font-size:10px;color:var(--ink-soft)}
+.schedule-grip{position:absolute;touch-action:none;user-select:none}.schedule-grip.move{top:7px;right:0;width:16px;bottom:7px;text-align:center;cursor:move;font-size:15px;color:var(--ink-soft)}.schedule-grip.top,.schedule-grip.bottom{left:0;right:0;height:6px;cursor:ns-resize}.schedule-grip.top{top:0}.schedule-grip.bottom{bottom:0}
+.weekly-nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.weekly-nav .ph{margin-right:auto;line-height:1.4}.weekly-nav input{max-width:155px;min-height:40px;color:var(--ink);background:transparent;border:1px solid var(--rule);border-radius:4px;padding:4px}
+.schedule-field{display:flex;flex-direction:column;gap:6px;margin:12px 0;font-size:14px}.schedule-field select,.schedule-field textarea{width:100%;padding:8px;border:1px solid var(--rule);border-radius:4px;background:var(--paper2);color:var(--ink);font-size:16px}.schedule-times{display:grid;grid-template-columns:1fr 1fr;gap:12px}.weekly-grid .schedule-block-edit{font-size:12px}
+@media(max-width:640px){.schedule-grid:not(.weekly-grid){min-width:290px;grid-template-columns:36px minmax(0,1fr)}.weekly-nav .ph{width:100%}.schedule-block-edit{font-size:13px}}
 </style>
 </head>
 <body>
@@ -232,6 +252,7 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 <div id="appBody" style="display:none">
 <nav class="tabs">
 <button class="tab active" data-p="daily">오늘</button>
+<button class="tab" data-p="weekly">Weekly</button>
 <button class="tab" data-p="monthly">Monthly</button>
 <button class="tab" data-p="future">Future</button>
 <button class="tab" data-p="habit">Tracker</button>
@@ -258,9 +279,14 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 <textarea class="reflection" id="dailyReflection" placeholder="잘된 일 하나, 내일 기억할 일 하나."></textarea>
 <details class="fold"><summary>달력 펼치기</summary><div class="minical" id="miniCal"></div></details>
 <details class="fold" id="scheduleFold"><summary>시간별 기록</summary>
-<div class="sched-hint">빈 곳을 눌러 시간을 기록하거나 드래그로 길이를 조절해요.</div>
-<div class="sched" id="sched"><div class="slots" id="slots"></div><div class="selbox" id="selbox"></div><div class="blocks" id="blocks"></div></div>
+<div class="sched-hint">왼쪽은 계획, 오른쪽은 실제예요. 빈 곳을 누르거나 드래그해서 기록하세요. 블록을 누르면 내용과 시간을 편집할 수 있어요.</div>
+<div class="schedule-scroll" id="dailySchedule"></div>
 </details>
+</section>
+<section class="panel" id="weekly">
+<div class="weekly-nav"><div class="ph" id="weeklyTitle">Weekly</div><button class="navbtn" id="weekPrev" aria-label="지난주">‹</button><input type="date" id="weekPicker" aria-label="보고 싶은 주의 날짜"><button class="navbtn" id="weekNext" aria-label="다음 주">›</button><button class="navbtn" id="weekToday">이번 주</button></div>
+<p class="hint">월요일부터 일요일까지 · 각 날짜의 왼쪽은 계획, 오른쪽은 실제예요. 날짜를 누르면 오늘 탭에서 열립니다.</p>
+<div class="schedule-scroll" id="weeklySchedule" tabindex="0" aria-label="주간 시간표, 좁은 화면에서는 가로로 스크롤"></div>
 </section>
 <section class="panel" id="monthly">
 <div class="mtitle-row"><button class="navbtn" id="monPrev" type="button">‹</button><div class="ph" id="monthTitle">Monthly Log</div><button class="navbtn" id="monNext" type="button">›</button></div>
@@ -340,6 +366,14 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 <div class="toast" id="toast" role="status" hidden><span id="toastText"></span><button id="undoAction" hidden>되돌리기</button><button id="dismissToast" aria-label="알림 닫기">×</button></div>
 <dialog id="moveDialog"><h2>다른 날짜로 이동</h2><p id="moveText"></p><label for="moveDate">옮길 날짜</label><input type="date" id="moveDate" required><p id="moveError" class="load-error" hidden></p><div class="dialog-actions"><button class="authbtn" id="cancelMove">취소</button><button class="authbtn" id="confirmMove">이동</button></div></dialog>
 <dialog id="conflictDialog"><h2>두 기기에서 같은 기록을 수정했어요</h2><p>겹치지 않는 변경은 모두 유지됩니다. 아래 겹치는 부분에 사용할 기록을 선택해 주세요. 선택 전에 현재 기록을 백업할 수 있어요.</p><div id="conflictDetails" class="conflict-list"></div><div class="dialog-actions"><button class="authbtn" id="backupConflict">현재 기록 백업</button><button class="authbtn" id="chooseRemote">클라우드 기록 사용</button><button class="authbtn" id="chooseLocal">이 기기 기록 사용</button><button class="authbtn" id="closeConflict">나중에</button></div></dialog>
+<dialog id="scheduleDialog"><form id="scheduleForm">
+<h2 id="scheduleDialogTitle">시간별 기록</h2><p id="scheduleDialogDate"></p>
+<label class="schedule-field">구분<select id="scheduleKind"><option value="plan">계획</option><option value="actual">실제</option></select></label>
+<label class="schedule-field">내용<textarea id="scheduleText" rows="3" placeholder="무엇을 할 건가요? 무엇을 했나요?"></textarea></label>
+<div class="schedule-times"><label class="schedule-field">시작<select id="scheduleStart"></select></label><label class="schedule-field">종료<select id="scheduleEnd"></select></label></div>
+<label class="schedule-field">색상<select id="scheduleColor"><option value="0">빨강</option><option value="1">초록</option><option value="2">파랑</option><option value="3">황토</option><option value="4">보라</option></select></label>
+<p id="scheduleError" class="load-error" hidden></p><div class="dialog-actions"><button type="button" class="reset" id="scheduleDelete">삭제</button><button type="button" class="authbtn" id="scheduleCancel">취소</button><button type="submit" class="authbtn">저장</button></div>
+</form></dialog>
 <div id="printArea"></div>
 <div id="lightbox"><img alt="사진"></div>
 <script type="module">
@@ -348,6 +382,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore, doc, getDoc, getDocFromServer, setDoc, deleteDoc, runTransaction, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {clone, emptyJournal, mergeJournal, validateJournal, moveTask, previousOpenTasks, journalEntryDates} from './journal-core.mjs';
 import {createJournalSync} from './journal-sync.mjs';
+import {renderSchedule,weekDates,scheduleKind,slotTime,saveSchedule} from './schedule.mjs';
 const firebaseConfig = {
   apiKey: "AIzaSyD58SEKBUCyg4Q6w2_tbw8MfsJivKr4jVU",
   authDomain: "bullet-journal-b359c.firebaseapp.com",
@@ -361,6 +396,7 @@ const auth = getAuth(app);
 const fdb = getFirestore(app);
 const provider = new GoogleAuthProvider();
 let db = emptyJournal();
+let viewWeek=null; let scheduleEditing=null;
 let journalMonth=null;
 let viewDaily=null; let viewMonth=null; let viewJournal=null; let viewFuture=null; let viewHabit=null;
 function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -451,7 +487,7 @@ async function connectUser(user) {
   document.getElementById('userName').textContent = user?.displayName || user?.email || '';
   document.querySelector('#gate h2').textContent = user ? '기록을 불러오고 있어요' : '로그인이 필요해요';
   if (!user) { setSaveState(''); return; }
-  journalMonth=null; viewDaily=null; viewMonth=null; viewJournal=null; viewFuture=null; viewHabit=null;
+  viewWeek=null; scheduleEditing=null; journalMonth=null; viewDaily=null; viewMonth=null; viewJournal=null; viewFuture=null; viewHabit=null;
   const ref = doc(fdb,'journals',user.uid);
   const parse = snap => snap.exists() && snap.data().data ? validateJournal(JSON.parse(snap.data().data)) : emptyJournal();
   const instance = createJournalSync({
@@ -533,12 +569,13 @@ function buildAll(){
   const di=document.querySelector('[data-input="daily"]'); if(di) di.onkeydown=(e)=>{ if(e.key==='Enter' && !e.isComposing)addItem('daily'); };
   const mi=document.querySelector('[data-input="monthly"]'); if(mi) mi.onkeydown=(e)=>{ if(e.key==='Enter' && !e.isComposing)addItem('monthly'); };
   const pin=document.getElementById('jPhotoInput'); if(pin) pin.onchange=(e)=>{ const fs=[...e.target.files]; e.target.value=''; if(fs.length) addPhotos(fs); };
-  buildSlots();
+  if(!viewWeek) viewWeek=new Date(viewDaily.y,viewDaily.m,viewDaily.d);
+  renderWeekly();
   buildMiniCal(); renderDaily();
   renderMonthly();
   buildFuture(); buildHabit(); renderJournal();
 }
-document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active')); t.classList.add('active'); document.getElementById(t.dataset.p).classList.add('active'); });
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active')); t.classList.add('active'); document.getElementById(t.dataset.p).classList.add('active'); if(t.dataset.p==='weekly')renderWeekly(); if(t.dataset.p==='daily')renderSched(); });
 
 function glyph(it){ if(it.type==='note') return {ch:'–',red:false}; if(it.type==='event') return {ch: it.status==='done'?'✓':'○', red:false}; switch(it.status){ case 'done': return {ch:'✓',red:false}; case 'migrated': return {ch:'›',red:true}; case 'scheduled': return {ch:'‹',red:true}; case 'strike': return {ch:'•',red:false}; default: return {ch:'•',red:false}; } }
 function statusClass(it){ if(it.status==='done') return 's-done'; if(it.status==='strike') return 's-strike'; if(it.status==='migrated') return 's-migrated'; if(it.status==='scheduled') return 's-scheduled'; return ''; }
@@ -800,18 +837,70 @@ async function removePhoto(k,id) {
 }
 function openLightbox(src){ const lb=document.getElementById('lightbox'); lb.querySelector('img').src=src; lb.style.display='flex'; }
 function glyphText(it){ if(it.type==='note')return '–'; if(it.type==='event')return it.status==='done'?'✓○':'○'; switch(it.status){case 'done':return '✓';case 'migrated':return '›';case 'scheduled':return '‹';case 'strike':return '✗';default:return '•';} }
-async function exportPDF(){ const btn=document.getElementById('exportPdf'); const orig=btn.textContent; btn.disabled=true; btn.textContent='PDF 생성 중…'; try{ const y=viewMonth.y, m=viewMonth.m; const days=new Date(y,m+1,0).getDate(); const allIds=[]; for(let d=1;d<=days;d++){ const ids=db.photos[dayKey(y,m,d)]; if(ids&&ids.length) allIds.push(...ids); } if(allIds.length) btn.textContent='사진 불러오는 중…'; await Promise.all(allIds.filter(id=>!photoCache[id]).map(async id=>{ try{ const snap=await getDoc(doc(fdb,'journalPhotos',id)); if(snap.exists()) photoCache[id]=snap.data().data; }catch(e){ console.error(e); } })); btn.textContent='PDF 생성 중…'; const P=[]; P.push('<h2>'+y+'년 '+monthsK[m]+' · Bullet Journal</h2>'); const mtasks=db.months[monKey(y,m)]||[]; if(mtasks.length){ P.push('<h3>Monthly Log</h3><ul>'); mtasks.forEach(it=>P.push('<li>'+glyphText(it)+' '+esc(it.text)+(it.pri?' ★':'')+'</li>')); P.push('</ul>'); } const dayParts=[]; for(let d=1;d<=days;d++){ const k=dayKey(y,m,d); const tasks=db.days[k]||[]; const sc=(db.sched[k]||[]).slice().sort((a,b)=>a.s-b.s); const jr=[db.reflections[k],db.journal[k]].filter(Boolean).join('\n\n'); const cal=db.cal2['c'+y+'-'+m+'-'+d]; const pics=(db.photos[k]||[]).map(id=>photoCache[id]).filter(Boolean); if(!tasks.length&&!sc.length&&!jr&&!cal&&!pics.length) continue; let s='<div class="pd"><div class="pdt">'+(m+1)+'/'+d+' ('+wdK[new Date(y,m,d).getDay()]+')</div>'; if(cal) s+='<div style="font-size:12px">· '+esc(cal)+'</div>'; if(tasks.length){ s+='<ul>'; tasks.forEach(it=>s+='<li>'+glyphText(it)+' '+esc(it.text)+(it.pri?' ★':'')+'</li>'); s+='</ul>'; } if(sc.length){ s+='<ul>'; sc.forEach(bk=>s+='<li>⏱ '+slotTime(bk.s)+'–'+slotTime(bk.e+1)+'  '+esc(bk.text||'')+'</li>'); s+='</ul>'; } if(jr){ s+='<div style="white-space:pre-wrap;font-size:12px;margin-top:3px">'+esc(jr)+'</div>'; } if(pics.length){ s+='<div class="pimgs">'; pics.forEach(pd=>s+='<img class="pimg" src="'+pd+'">'); s+='</div>'; } s+='</div>'; dayParts.push(s); } if(dayParts.length){ P.push('<h3>Daily</h3>'); P.push(dayParts.join('')); } const habits=db.habits||[]; if(habits.length){ P.push('<h3>Tracker</h3><table><thead><tr><th></th>'); habits.forEach(hb=>P.push('<th>'+esc(hb.name)+'</th>')); P.push('</tr></thead><tbody>'); for(let d=1;d<=days;d++){ P.push('<tr><td>'+d+'</td>'); habits.forEach(hb=>{ const on=db.habitLog[habitLogKey(y,m,d,hb.id)]; P.push('<td>'+(on?'●':'')+'</td>'); }); P.push('</tr>'); } P.push('</tbody></table>'); } document.getElementById('printArea').innerHTML=P.join(''); window.print(); } finally { btn.textContent=orig; btn.disabled=false; } }
+async function exportPDF(){ const btn=document.getElementById('exportPdf'); const orig=btn.textContent; btn.disabled=true; btn.textContent='PDF 생성 중…'; try{ const y=viewMonth.y, m=viewMonth.m; const days=new Date(y,m+1,0).getDate(); const allIds=[]; for(let d=1;d<=days;d++){ const ids=db.photos[dayKey(y,m,d)]; if(ids&&ids.length) allIds.push(...ids); } if(allIds.length) btn.textContent='사진 불러오는 중…'; await Promise.all(allIds.filter(id=>!photoCache[id]).map(async id=>{ try{ const snap=await getDoc(doc(fdb,'journalPhotos',id)); if(snap.exists()) photoCache[id]=snap.data().data; }catch(e){ console.error(e); } })); btn.textContent='PDF 생성 중…'; const P=[]; P.push('<h2>'+y+'년 '+monthsK[m]+' · Bullet Journal</h2>'); const mtasks=db.months[monKey(y,m)]||[]; if(mtasks.length){ P.push('<h3>Monthly Log</h3><ul>'); mtasks.forEach(it=>P.push('<li>'+glyphText(it)+' '+esc(it.text)+(it.pri?' ★':'')+'</li>')); P.push('</ul>'); } const dayParts=[]; for(let d=1;d<=days;d++){ const k=dayKey(y,m,d); const tasks=db.days[k]||[]; const sc=(db.sched[k]||[]).slice().sort((a,b)=>a.s-b.s); const jr=[db.reflections[k],db.journal[k]].filter(Boolean).join('\n\n'); const cal=db.cal2['c'+y+'-'+m+'-'+d]; const pics=(db.photos[k]||[]).map(id=>photoCache[id]).filter(Boolean); if(!tasks.length&&!sc.length&&!jr&&!cal&&!pics.length) continue; let s='<div class="pd"><div class="pdt">'+(m+1)+'/'+d+' ('+wdK[new Date(y,m,d).getDay()]+')</div>'; if(cal) s+='<div style="font-size:12px">· '+esc(cal)+'</div>'; if(tasks.length){ s+='<ul>'; tasks.forEach(it=>s+='<li>'+glyphText(it)+' '+esc(it.text)+(it.pri?' ★':'')+'</li>'); s+='</ul>'; } if(sc.length){ s+='<ul>'; sc.forEach(bk=>s+='<li>⏱ ['+(scheduleKind(bk)==='plan'?'계획':'실제')+'] '+slotTime(bk.s)+'–'+slotTime(bk.e+1)+'  '+esc(bk.text||'')+'</li>'); s+='</ul>'; } if(jr){ s+='<div style="white-space:pre-wrap;font-size:12px;margin-top:3px">'+esc(jr)+'</div>'; } if(pics.length){ s+='<div class="pimgs">'; pics.forEach(pd=>s+='<img class="pimg" src="'+pd+'">'); s+='</div>'; } s+='</div>'; dayParts.push(s); } if(dayParts.length){ P.push('<h3>Daily</h3>'); P.push(dayParts.join('')); } const habits=db.habits||[]; if(habits.length){ P.push('<h3>Tracker</h3><table><thead><tr><th></th>'); habits.forEach(hb=>P.push('<th>'+esc(hb.name)+'</th>')); P.push('</tr></thead><tbody>'); for(let d=1;d<=days;d++){ P.push('<tr><td>'+d+'</td>'); habits.forEach(hb=>{ const on=db.habitLog[habitLogKey(y,m,d,hb.id)]; P.push('<td>'+(on?'●':'')+'</td>'); }); P.push('</tr>'); } P.push('</tbody></table>'); } document.getElementById('printArea').innerHTML=P.join(''); window.print(); } finally { btn.textContent=orig; btn.disabled=false; } }
 
-/* ---- time-block schedule ---- */
-const SLOT=26, START_H=6, END_H=24, STEP=30, NSLOT=(END_H-START_H)*(60/STEP);
-const palette=[{bar:'#a8443a',fill:'rgba(168,68,58,.15)'},{bar:'#6f8a52',fill:'rgba(111,138,82,.17)'},{bar:'#4f7d8f',fill:'rgba(79,125,143,.16)'},{bar:'#a07a3c',fill:'rgba(160,122,60,.17)'},{bar:'#8a5f86',fill:'rgba(138,95,134,.16)'}];
-function slotTime(i){ const mm=START_H*60+i*STEP; return pad2(Math.floor(mm/60))+':'+pad2(mm%60); }
-let slotsBuilt=false;
-function buildSlots(){ const slots=document.getElementById('slots'); const sched=document.getElementById('sched'); if(!slots||!sched) return; sched.style.height=(NSLOT*SLOT)+'px'; let h=''; for(let i=0;i<NSLOT;i++){ const isHour=((START_H*60+i*STEP)%60)===0; h+='<div class="slot'+(isHour?' hour':'')+'" style="top:'+(i*SLOT)+'px;height:'+SLOT+'px">'+(isHour?'<span class="tlabel">'+slotTime(i)+'</span>':'')+'</div>'; } slots.innerHTML=h; slotsBuilt=true; }
-function schedList(){ const k=dayKey(viewDaily.y,viewDaily.m,viewDaily.d); db.sched[k]=db.sched[k]||[]; return db.sched[k]; }
-function blockDrag(handle,div,bk,mode){ handle.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); const startY=e.clientY, origS=bk.s, origE=bk.e, dur=origE-origS; div._ns=null; try{handle.setPointerCapture(e.pointerId);}catch(_){} function mv(ev){ const delta=Math.round((ev.clientY-startY)/SLOT); let s=origS,en=origE; if(mode==='move'){ s=origS+delta; en=origE+delta; if(s<0){s=0;en=dur;} if(en>NSLOT-1){en=NSLOT-1;s=en-dur;} } else if(mode==='top'){ s=Math.min(Math.max(0,origS+delta),origE); en=origE; } else { en=Math.max(Math.min(NSLOT-1,origE+delta),origS); s=origS; } div.style.top=(s*SLOT)+'px'; div.style.height=((en-s+1)*SLOT-2)+'px'; const tmx=div.querySelector('.btime'); if(tmx)tmx.textContent=slotTime(s)+'–'+slotTime(en+1); div._ns=s; div._ne=en; } function up(){ handle.removeEventListener('pointermove',mv); handle.removeEventListener('pointerup',up); handle.removeEventListener('pointercancel',up); if(div._ns!=null){ bk.s=div._ns; bk.e=div._ne; } save(); renderSched(); buildMiniCal(); } handle.addEventListener('pointermove',mv); handle.addEventListener('pointerup',up); handle.addEventListener('pointercancel',up); }); }
-function renderSched(){ const wrap=document.getElementById('blocks'); if(!wrap) return; wrap.innerHTML=''; schedList().slice().sort((a,b)=>a.s-b.s).forEach(bk=>{ const p=palette[(bk.color||0)%palette.length]; const div=document.createElement('div'); div.className='block'; div.dataset.blk=bk.id; div.style.top=(bk.s*SLOT)+'px'; div.style.height=((bk.e-bk.s+1)*SLOT-2)+'px'; div.style.background=p.fill; div.style.borderLeftColor=p.bar; const grip=document.createElement('span'); grip.className='bgrip'; grip.textContent='⠿'; grip.title='드래그해서 이동'; const dot=document.createElement('span'); dot.className='cdot'; dot.style.background=p.bar; dot.title='색상'; dot.onclick=()=>{bk.color=((bk.color||0)+1)%palette.length;save();renderSched();}; const tm=document.createElement('span'); tm.className='btime'; tm.textContent=slotTime(bk.s)+'–'+slotTime(bk.e+1); const inp=document.createElement('input'); inp.className='binput'; inp.value=bk.text||''; inp.placeholder='무엇을 했나요?'; inp.oninput=()=>{bk.text=inp.value;save();}; const del=document.createElement('button'); del.className='bdel'; del.textContent='×'; del.onclick=()=>{ const l=schedList(); const i=l.findIndex(x=>x.id===bk.id); if(i>-1)l.splice(i,1); save(); renderSched(); buildMiniCal(); }; const rzT=document.createElement('div'); rzT.className='rz rz-top'; const rzB=document.createElement('div'); rzB.className='rz rz-bot'; div.append(grip,dot,tm,inp,del,rzT,rzB); wrap.appendChild(div); blockDrag(grip,div,bk,'move'); blockDrag(rzT,div,bk,'top'); blockDrag(rzB,div,bk,'bottom'); }); }
-(function(){ const slots=document.getElementById('slots'); const selbox=document.getElementById('selbox'); if(!slots) return; let dragging=false, ds=0, de=0, y0=0, moved=false, touch=false; function idxFromY(e){ const r=slots.getBoundingClientRect(); let y=e.clientY-r.top; y=Math.max(0,Math.min(r.height-1,y)); return Math.floor(y/SLOT); } function drawSel(){ const s=Math.min(ds,de), en=Math.max(ds,de); selbox.style.display='block'; selbox.style.top=(s*SLOT)+'px'; selbox.style.height=((en-s+1)*SLOT)+'px'; } slots.addEventListener('pointerdown',e=>{ dragging=true; touch=(e.pointerType==='touch'); ds=de=idxFromY(e); y0=e.clientY; moved=false; if(!touch){ drawSel(); try{slots.setPointerCapture(e.pointerId);}catch(_){} } }); slots.addEventListener('pointermove',e=>{ if(!dragging)return; if(Math.abs(e.clientY-y0)>5) moved=true; if(!touch){ de=idxFromY(e); drawSel(); } }); function commit(){ if(!dragging)return; dragging=false; selbox.style.display='none'; if(touch && moved) return; let s,en; if(!moved){ s=ds; en=Math.min(ds+1,NSLOT-1); } else { s=Math.min(ds,de); en=Math.max(ds,de); } const l=schedList(); const bk={id:genId(),s,e:en,text:'',color:l.length%palette.length}; l.push(bk); save(); renderSched(); buildMiniCal(); const el=document.querySelector('[data-blk="'+bk.id+'"] .binput'); if(el && !touch) el.focus(); } function abort(){ dragging=false; selbox.style.display='none'; } slots.addEventListener('pointerup',commit); slots.addEventListener('pointercancel',abort); })();
+/* Shared planned/actual schedule in daily and weekly views. */
+const keyOfDate=date=>dayKey(date.getFullYear(),date.getMonth(),date.getDate());
+function scheduleOptions(dates,compact=false){return {dates,compact,keyOf:keyOfDate,getData:()=>db,onEdit:openScheduleEditor,
+  onDay:date=>{selectDay(date);document.querySelector('[data-p="daily"]').click();document.getElementById('scheduleFold').open=true;},
+  onMove:(key,block,before)=>{
+    const current=(db.sched[key] || []).find(item=>item.id===block.id);
+    if(JSON.stringify(current)!==JSON.stringify(before)){notify('다른 곳에서 수정된 기록이에요. 다시 선택해 주세요.');refreshSchedules();return;}
+    changeWithUndo('시간을 옮겼어요.',()=>saveSchedule(db,key,block));
+  }};}
+function renderSched(){if(viewDaily)renderSchedule(document.getElementById('dailySchedule'),scheduleOptions([new Date(viewDaily.y,viewDaily.m,viewDaily.d)]));}
+function renderWeekly(){
+  if(!viewWeek)return;
+  const dates=weekDates(viewWeek),start=dates[0],end=dates[6];
+  document.getElementById('weeklyTitle').textContent=start.getFullYear()+'년 '+(start.getMonth()+1)+'월 '+start.getDate()+'일 – '+(end.getFullYear()!==start.getFullYear()?end.getFullYear()+'년 ':'')+(end.getMonth()+1)+'월 '+end.getDate()+'일';
+  document.getElementById('weekPicker').value=keyOfDate(viewWeek);
+  renderSchedule(document.getElementById('weeklySchedule'),scheduleOptions(dates,true));
+}
+function refreshSchedules(){renderSched();renderWeekly();buildMiniCal();}
+function openScheduleEditor(key,block){
+  const before=block.id?(db.sched[key] || []).find(item=>item.id===block.id):null;
+  if(block.id&&!before)return;
+  scheduleEditing={key,block:clone(block),before:clone(before),epoch:authEpoch};
+  document.getElementById('scheduleDialogTitle').textContent=before?'시간별 기록 편집':'시간별 기록 추가';
+  document.getElementById('scheduleDialogDate').textContent=key;
+  document.getElementById('scheduleKind').value=scheduleKind(block);
+  document.getElementById('scheduleText').value=block.text;
+  document.getElementById('scheduleColor').value=String((block.color || 0)%5);
+  for(const [id,first,last,value] of [['scheduleStart',0,35,block.s],['scheduleEnd',1,36,block.e+1]]){
+    const select=document.getElementById(id);select.textContent='';
+    for(let slot=first;slot<=last;slot++){const option=document.createElement('option');option.value=String(slot);option.textContent=slotTime(slot);select.append(option);}select.value=String(value);
+  }
+  document.getElementById('scheduleDelete').hidden=!before;
+  document.getElementById('scheduleError').hidden=true;
+  document.getElementById('scheduleDialog').showModal();document.getElementById('scheduleText').focus();
+}
+function scheduleEditorValid(){
+  if(!scheduleEditing || scheduleEditing.epoch!==authEpoch)return false;
+  const {key,before}=scheduleEditing;
+  if(before&&JSON.stringify((db.sched[key] || []).find(item=>item.id===before.id))!==JSON.stringify(before)){
+    const error=document.getElementById('scheduleError');error.textContent='편집 중 다른 기기에서 기록이 바뀌었어요. 닫고 다시 열어 주세요.';error.hidden=false;return false;
+  }return true;
+}
+document.getElementById('scheduleForm').onsubmit=event=>{
+  event.preventDefault();if(!scheduleEditorValid())return;
+  const {key,block}=scheduleEditing,s=Number(document.getElementById('scheduleStart').value),e=Number(document.getElementById('scheduleEnd').value)-1;
+  if(e<s){const error=document.getElementById('scheduleError');error.textContent='종료 시간은 시작 시간보다 늦어야 해요.';error.hidden=false;return;}
+  const updated={...block,id:block.id || genId(),s,e,kind:document.getElementById('scheduleKind').value,text:document.getElementById('scheduleText').value.trim(),color:Number(document.getElementById('scheduleColor').value)};
+  changeWithUndo('시간별 기록을 저장했어요.',()=>saveSchedule(db,key,updated));
+  document.getElementById('scheduleDialog').close();scheduleEditing=null;
+};
+document.getElementById('scheduleCancel').onclick=()=>{document.getElementById('scheduleDialog').close();scheduleEditing=null;};
+document.getElementById('scheduleDelete').onclick=()=>{
+  if(!scheduleEditorValid() || !scheduleEditing.before)return;
+  const {key,before}=scheduleEditing;
+  changeWithUndo('시간별 기록을 삭제했어요.',()=>{db.sched[key]=db.sched[key].filter(item=>item.id!==before.id);});
+  document.getElementById('scheduleDialog').close();scheduleEditing=null;
+};
+function shiftWeek(delta){viewWeek=new Date(viewWeek.getFullYear(),viewWeek.getMonth(),viewWeek.getDate()+7*delta);renderWeekly();}
+document.getElementById('weekPrev').onclick=()=>shiftWeek(-1);
+document.getElementById('weekNext').onclick=()=>shiftWeek(1);
+document.getElementById('weekToday').onclick=()=>{viewWeek=new Date();renderWeekly();};
+document.getElementById('weekPicker').onchange=event=>{const [y,m,d]=event.target.value.split('-').map(Number);if(y>=100&&m&&d){viewWeek=new Date(y,m-1,d);renderWeekly();}};
 
 document.getElementById('monPrev').onclick=()=>shiftMonth(-1);
 document.getElementById('monNext').onclick=()=>shiftMonth(1);
