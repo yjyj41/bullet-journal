@@ -87,3 +87,10 @@ export function previousOpenTasks(data, before) {
   return Object.keys(data.days).filter(k => k < before).sort().flatMap(day =>
     data.days[day].flatMap((item,index) => item.type === 'task' && ['open','scheduled'].includes(item.status) ? [{day,index,item}] : []));
 }
+
+export function journalEntryDates(data) {
+  return [...new Set([...Object.keys(data.journal || {}), ...Object.keys(data.reflections || {}), ...Object.keys(data.photos || {})])]
+    .filter(key => /^\d{4}-\d{2}-\d{2}$/.test(key) &&
+      ((data.journal?.[key] || '').trim() || (data.reflections?.[key] || '').trim() || data.photos?.[key]?.length))
+    .sort();
+}
