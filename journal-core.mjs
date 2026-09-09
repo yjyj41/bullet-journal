@@ -36,7 +36,7 @@ export function resolveJournal(merged, conflicts, choice) {
 }
 
 export function emptyJournal() {
-  return {lists:{daily:[],monthly:[]}, days:{}, months:{}, sched:{}, notes:{}, habit:{},
+  return {lists:{daily:[],monthly:[]}, days:{}, months:{}, sched:{}, schedPlans:{}, notes:{}, habit:{},
     habitLog:{}, habits:null, journal:{}, reflections:{}, photos:{}, cal:{}, cal2:{}, future:{}};
 }
 
@@ -50,7 +50,7 @@ export function validateJournal(data) {
     }
   };
   scan(data);
-  for (const key of ['lists','days','months','sched','notes','habit','habitLog','journal','reflections','photos','cal','cal2','future']) {
+  for (const key of ['lists','days','months','sched','schedPlans','notes','habit','habitLog','journal','reflections','photos','cal','cal2','future']) {
     if (data[key] !== undefined && !object(data[key])) throw new Error('잘못된 백업 항목: '+key);
   }
   const safeId = value => typeof value === 'string' && /^[A-Za-z0-9_-]+$/.test(value);
@@ -62,7 +62,7 @@ export function validateJournal(data) {
   for (const map of [data.days, data.months, data.lists]) {
     for (const list of Object.values(map || {})) if (!Array.isArray(list) || !list.every(item)) throw new Error('할 일 목록 형식 오류');
   }
-  for (const list of Object.values(data.sched || {})) {
+  for (const list of Object.values({...data.sched,...Object.fromEntries(Object.entries(data.schedPlans||{}).map(([k,v])=>['plan:'+k,v]))})) {
     if (!Array.isArray(list) || !list.every(b => object(b) && safeId(b.id) && Number.isInteger(b.s) && Number.isInteger(b.e) && b.s >= 0 && b.e >= b.s && b.e < 36 && typeof b.text === 'string' && (b.color == null || (Number.isInteger(b.color) && b.color >= 0)))) throw new Error('시간표 형식 오류');
   }
   for (const map of [data.notes, data.journal, data.reflections, data.cal, data.cal2, data.future]) {
