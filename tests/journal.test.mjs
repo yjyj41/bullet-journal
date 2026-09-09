@@ -1,10 +1,20 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {clone,emptyJournal,mergeJournal,resolveJournal,validateJournal,moveTask,previousOpenTasks} from '../journal-core.mjs';
+import {clone,emptyJournal,mergeJournal,resolveJournal,validateJournal,moveTask,previousOpenTasks,journalEntryDates} from '../journal-core.mjs';
 import {createJournalSync} from '../journal-sync.mjs';
 
 const task = text => ({type:'task',status:'open',text,pri:false});
+test('journal calendar finds text, reflection and photo-only dates without empty drafts',()=>{
+  const data=emptyJournal();data.journal={'2026-09-09':'일기','2026-09-08':'  ','2026-09-07':''};
+  data.reflections={'2026-09-09':'같은 날','2024-02-29':'윤년 기록'};data.photos={'2025-12-31':['photo'],'2026-01-01':[]};
+  const before=JSON.stringify(data);
+  assert.deepEqual(journalEntryDates(data),['2024-02-29','2025-12-31','2026-09-09']);
+  assert.equal(JSON.stringify(data),before);
+});
+test('journal calendar supports old data without reflection or photo maps',()=>{
+  assert.deepEqual(journalEntryDates({journal:{'2026-01-01':'새해'}}),['2026-01-01']);
+});
 const memory = () => {const map=new Map(); return {getItem:k=>map.get(k) ?? null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k),map};};
 function harness(initial=emptyJournal(), options={}) {
   let remote=clone(initial), failRead=false, failSave=false, release=null;

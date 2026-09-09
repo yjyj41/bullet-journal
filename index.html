@@ -177,7 +177,7 @@ button,input,textarea,select{font:inherit}
 button:focus-visible,summary:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--red);outline-offset:3px}
 button:disabled{opacity:.5;cursor:wait}
 [hidden]{display:none !important}
-.book{max-width:780px}.masthead{padding-top:40px}
+.book{width:100%;max-width:1360px}.masthead{padding-top:40px}
 .authbar{flex-wrap:wrap;justify-content:flex-end}.savestate{font-size:12px}
 .today-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .day-controls{display:flex;gap:6px;align-items:center}.day-controls input{min-width:0;width:145px}
@@ -200,6 +200,17 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 .backup-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0}.load-error{color:var(--red);margin:12px 0}
 @media(max-width:640px){.masthead{padding-top:0}.adder{gap:3px;padding:8px}.typebtn{width:30px}.adder .authbtn{padding:5px 8px}.tag{flex-basis:auto}.today-head .ph{font-size:18px}.day-controls{width:100%}.day-controls input{flex:1}.tab{padding:10px}.itext{font-size:16px}.book{padding:14px 10px 24px}.bullet,.star{min-width:30px}.item-menu{max-width:62px}.htable th{font-size:13px}}
 @media print{.toast,dialog{display:none !important}}
+
+.journal-layout{display:grid;grid-template-columns:290px minmax(0,1fr);gap:32px;align-items:start}
+.journal-sidebar{position:sticky;top:20px;padding:16px;background:var(--paper2);border:1px solid var(--rule);border-radius:8px;min-width:0}
+.journal-editor{min-width:0}.journal-editor .jtext{min-height:460px}
+.journal-sidebar h3{font-size:15px;margin-bottom:12px}.journal-month-nav{display:flex;gap:5px;align-items:center;margin-bottom:10px}.journal-month-nav input{width:0;flex:1;min-width:0;background:transparent;border:1px solid var(--rule);border-radius:4px;padding:6px 2px;color:var(--ink);font-size:14px}
+#journalCalendar .mc-cell{font-family:var(--sans);background:transparent;min-width:0;min-height:34px;padding:0}#journalCalendar .mc-cell.sel{background:var(--ink);color:var(--paper)}#journalCalendar .mc-cell:hover{background:#e7dec9;color:var(--ink)}
+.journal-entry-nav{display:flex;gap:6px;margin-top:14px}.journal-entry-nav button{flex:1;font-size:13px}.journal-entry-nav button:disabled{cursor:default}
+.journal-reflection{border-left:3px solid var(--red);padding:8px 12px;margin:0 0 14px;background:var(--paper2);font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.journal-sidebar .hint{font-size:12px;line-height:1.6}.journal-editor .dnav{gap:6px}.journal-editor .dnav .ph{flex:1;line-height:1.4}
+@media(min-width:1000px){body{padding:24px 28px 60px}.book{padding:30px 38px 44px}.spread{gap:40px}.future{grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}.journal-layout{gap:40px}nav.tabs{gap:6px}}
+@media(max-width:899px){.journal-layout{grid-template-columns:1fr;gap:22px}.journal-sidebar{position:static;max-width:420px;width:100%}.journal-editor .jtext{min-height:320px}}
 </style>
 </head>
 <body>
@@ -285,11 +296,17 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 <div class="habit-edit"><h5>습관 항목 편집</h5><div id="habitEditList"></div><button class="he-add" id="habitAdd">＋ 항목 추가</button></div>
 </section>
 <section class="panel" id="journal">
-<div class="dnav"><button class="navbtn" id="jPrev" type="button">‹</button><div class="ph" id="journalDate" style="margin:0">Journal</div><button class="navbtn" id="jNext" type="button">›</button><button class="navbtn" id="jToday" type="button">오늘</button></div>
+<div class="journal-layout"><aside class="journal-sidebar" aria-label="일기 날짜 탐색"><h3>지난 일기 찾아보기</h3>
+<div class="journal-month-nav"><button class="navbtn" id="jMonthPrev" aria-label="이전 달">‹</button><input type="month" id="jMonthPicker" aria-label="일기 달 선택"><button class="navbtn" id="jMonthNext" aria-label="다음 달">›</button></div>
+<div id="journalCalendar" class="minical"></div><p class="hint" id="journalMonthCount" aria-live="polite"></p><p class="hint">점이 있는 날에는 일기·사진·하루 한 줄이 있어요.</p>
+<div class="journal-entry-nav"><button class="reset" id="jEntryPrev">← 이전 기록</button><button class="reset" id="jEntryNext">다음 기록 →</button></div>
+</aside><div class="journal-editor"><div class="dnav"><button class="navbtn" id="jPrev" aria-label="전날 일기" type="button">‹</button><div class="ph" id="journalDate" style="margin:0">Journal</div><button class="navbtn" id="jNext" aria-label="다음 날 일기" type="button">›</button><button class="navbtn" id="jToday" type="button">오늘</button></div>
 <hr class="rule">
-<textarea class="jtext" id="journalText" placeholder="오늘 하루는 어땠나요? 자유롭게 적어보세요."></textarea>
+<div class="journal-reflection" id="journalReflection" hidden></div>
+<textarea class="jtext" aria-label="일기 내용" id="journalText" placeholder="오늘 하루는 어땠나요? 자유롭게 적어보세요."></textarea>
 <div class="jphotos" id="jPhotos"></div>
 <label class="he-add jaddphoto" id="jAddLabel"><span id="jAddText">📷 사진 추가</span><input type="file" id="jPhotoInput" accept="image/*" multiple style="display:none"></label>
+</div></div>
 </section>
 <section class="panel" id="index">
 <div class="ph">Index</div>
@@ -329,7 +346,7 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, getDocFromServer, setDoc, deleteDoc, runTransaction, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {clone, emptyJournal, mergeJournal, validateJournal, moveTask, previousOpenTasks} from './journal-core.mjs';
+import {clone, emptyJournal, mergeJournal, validateJournal, moveTask, previousOpenTasks, journalEntryDates} from './journal-core.mjs';
 import {createJournalSync} from './journal-sync.mjs';
 const firebaseConfig = {
   apiKey: "AIzaSyD58SEKBUCyg4Q6w2_tbw8MfsJivKr4jVU",
@@ -344,6 +361,7 @@ const auth = getAuth(app);
 const fdb = getFirestore(app);
 const provider = new GoogleAuthProvider();
 let db = emptyJournal();
+let journalMonth=null;
 let viewDaily=null; let viewMonth=null; let viewJournal=null; let viewFuture=null; let viewHabit=null;
 function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function pad2(n){return n<10?'0'+n:''+n;}
@@ -409,7 +427,7 @@ function renderRemote(value) {
   const target = locate();
   if (target) { target.focus({preventScroll:true}); if (selection && target.setSelectionRange) target.setSelectionRange(...selection); }
 }
-function save() { if (sync?.isReady()) { sync.edit(db); renderToday(); } }
+function save() { if (sync?.isReady()) { sync.edit(db); renderToday(); if(viewJournal) buildJournalCalendar(); } }
 async function cloudSave() { return sync ? sync.flush() : false; }
 async function connectUser(user) {
   const epoch = ++authEpoch;
@@ -433,7 +451,7 @@ async function connectUser(user) {
   document.getElementById('userName').textContent = user?.displayName || user?.email || '';
   document.querySelector('#gate h2').textContent = user ? '기록을 불러오고 있어요' : '로그인이 필요해요';
   if (!user) { setSaveState(''); return; }
-  viewDaily=null; viewMonth=null; viewJournal=null; viewFuture=null; viewHabit=null;
+  journalMonth=null; viewDaily=null; viewMonth=null; viewJournal=null; viewFuture=null; viewHabit=null;
   const ref = doc(fdb,'journals',user.uid);
   const parse = snap => snap.exists() && snap.data().data ? validateJournal(JSON.parse(snap.data().data)) : emptyJournal();
   const instance = createJournalSync({
@@ -673,7 +691,7 @@ document.getElementById('dayNext').onclick=() => selectDay(new Date(viewDaily.y,
 document.getElementById('dayToday').onclick=() => { const today=new Date(); Y=today.getFullYear(); M=today.getMonth(); D=today.getDate(); selectDay(today); };
 document.getElementById('dayPicker').onchange=event => { const [y,m,d]=event.target.value.split('-').map(Number); if(y&&m&&d) selectDay(new Date(y,m-1,d)); };
 document.getElementById('dailyAdd').onclick=() => addItem('daily');
-document.getElementById('openJournal').onclick=() => { viewJournal={...viewDaily}; renderJournal(); document.querySelector('[data-p="journal"]').click(); document.getElementById('journalText').focus(); };
+document.getElementById('openJournal').onclick=() => { selectJournalDate(new Date(viewDaily.y,viewDaily.m,viewDaily.d)); document.querySelector('[data-p="journal"]').click(); document.getElementById('journalText').focus(); };
 document.getElementById('dismissToast').onclick=() => { document.getElementById('toast').hidden=true; };
 
 document.querySelectorAll('.typebtn').forEach(btn=>{ btn.onclick=()=>{ const f=btn.dataset.for; document.querySelectorAll('.typebtn[data-for="'+f+'"]').forEach(x=>x.classList.remove('sel')); btn.classList.add('sel'); }; });
@@ -686,8 +704,52 @@ function habitLogKey(y,m,d,hid){ return dayKey(y,m,d)+'|'+hid; }
 function buildHabit(){ const y=viewHabit.y, m=viewHabit.m; document.getElementById('trackerTitle').textContent=y+'년 '+monthsK[m]+' · Tracker'; const habits=db.habits; const days=new Date(y,m+1,0).getDate(); const t=document.getElementById('habitTable'); let head='<thead><tr><th></th>'+habits.map(hb=>'<th>'+esc(hb.name)+'</th>').join('')+'</tr></thead>'; let body='<tbody>'; for(let d=1;d<=days;d++){ const isT=(y===Y&&m===M&&d===D); body+='<tr'+(isT?' style="background:rgba(168,68,58,.08)"':'')+'><td class="d">'+d+'</td>'; for(const hb of habits){ const key=habitLogKey(y,m,d,hb.id); const on=db.habitLog[key]?' on':''; body+='<td><button type="button" class="hdot'+on+'" data-k="'+key+'" aria-label="'+(m+1)+'월 '+d+'일 '+esc(hb.name)+'" aria-pressed="'+!!on+'"></button></td>'; } body+='</tr>'; } body+='</tbody>'; t.innerHTML=head+body; t.querySelectorAll('.hdot').forEach(dot=>dot.onclick=()=>{ const k=dot.dataset.k; if(db.habitLog[k]) delete db.habitLog[k]; else db.habitLog[k]=true; dot.classList.toggle('on'); dot.setAttribute('aria-pressed',String(!!db.habitLog[k])); save(); }); buildHabitEdit(); }
 function buildHabitEdit(){ const host=document.getElementById('habitEditList'); if(!host) return; host.innerHTML=''; db.habits.forEach((hb,i)=>{ const row=document.createElement('div'); row.className='he-row'; const inp=document.createElement('input'); inp.value=hb.name; inp.oninput=()=>{hb.name=inp.value;save();}; inp.onchange=()=>buildHabit(); const del=document.createElement('button'); del.textContent='×'; del.title='삭제'; del.onclick=()=>{ if(confirm('"'+hb.name+'" 항목을 삭제할까요? (이 항목의 체크 기록도 사라져요)')){ db.habits.splice(i,1); save(); buildHabit(); } }; row.append(inp,del); host.appendChild(row); }); }
 function shiftHabit(delta){ let m=viewHabit.m+delta, y=viewHabit.y; while(m<0){m+=12;y--;} while(m>11){m-=12;y++;} viewHabit={y,m}; buildHabit(); }
-function renderJournal(){ const v=viewJournal, isT=(v.y===Y&&v.m===M&&v.d===D); document.getElementById('journalDate').textContent=v.y+'년 '+monthsK[v.m]+' '+v.d+'일 · '+wdK[new Date(v.y,v.m,v.d).getDay()]+'요일'+(isT?' · 오늘':''); const ta=document.getElementById('journalText'); const k=dayKey(v.y,v.m,v.d); ta.value=db.journal[k]||''; ta.oninput=()=>{ if(ta.value) db.journal[k]=ta.value; else delete db.journal[k]; save(); }; renderJournalPhotos(k); }
-function shiftJournal(delta){ const nd=new Date(viewJournal.y,viewJournal.m,viewJournal.d+delta); viewJournal={y:nd.getFullYear(),m:nd.getMonth(),d:nd.getDate()}; renderJournal(); }
+
+function renderJournal() {
+  const v=viewJournal, k=dayKey(v.y,v.m,v.d), today=new Date();
+  const isToday=k===dayKey(today.getFullYear(),today.getMonth(),today.getDate());
+  document.getElementById('journalDate').textContent=v.y+'년 '+monthsK[v.m]+' '+v.d+'일 · '+wdK[new Date(v.y,v.m,v.d).getDay()]+'요일'+(isToday?' · 오늘':'');
+  const textarea=document.getElementById('journalText'); textarea.value=db.journal[k] || '';
+  textarea.oninput=()=>{if(textarea.value) db.journal[k]=textarea.value; else delete db.journal[k]; save();};
+  const reflection=document.getElementById('journalReflection'); reflection.textContent=db.reflections[k] || ''; reflection.hidden=!reflection.textContent.trim();
+  if(!journalMonth) journalMonth={y:v.y,m:v.m};
+  buildJournalCalendar(); renderJournalPhotos(k);
+}
+function selectJournalDate(date) {
+  viewJournal={y:date.getFullYear(),m:date.getMonth(),d:date.getDate()};
+  journalMonth={y:viewJournal.y,m:viewJournal.m}; renderJournal();
+}
+function shiftJournal(delta) { selectJournalDate(new Date(viewJournal.y,viewJournal.m,viewJournal.d+delta)); }
+function buildJournalCalendar() {
+  if(!viewJournal) return;
+  if(!journalMonth) journalMonth={y:viewJournal.y,m:viewJournal.m};
+  const {y,m}=journalMonth, prefix=y+'-'+pad2(m+1), selected=dayKey(viewJournal.y,viewJournal.m,viewJournal.d);
+  const entries=journalEntryDates(db), dates=new Set(entries), today=new Date(), todayKey=dayKey(today.getFullYear(),today.getMonth(),today.getDate());
+  document.getElementById('jMonthPicker').value=prefix;
+  const host=document.getElementById('journalCalendar'); host.textContent='';
+  const grid=document.createElement('div'); grid.className='mc-grid';
+  for(let day=0;day<7;day++){const label=document.createElement('div');label.className='mc-wd'+(day===0?' sun':'');label.textContent=wdK[day];grid.append(label);}
+  for(let n=0;n<new Date(y,m,1).getDay();n++){const blank=document.createElement('div');blank.setAttribute('aria-hidden','true');grid.append(blank);}
+  for(let day=1;day<=new Date(y,m+1,0).getDate();day++){
+    const key=dayKey(y,m,day), button=document.createElement('button');button.type='button';
+    button.className='mc-cell'+(key===todayKey?' today':'')+(key===selected?' sel':'')+(dates.has(key)?' has':'');
+    button.textContent=day;button.setAttribute('aria-label',key+(dates.has(key)?' 기록 있음':' 기록 없음'));
+    button.setAttribute('aria-pressed',String(key===selected));if(key===todayKey)button.setAttribute('aria-current','date');
+    button.onclick=()=>{selectJournalDate(new Date(y,m,day));document.querySelector('#journalCalendar [aria-pressed="true"]')?.focus({preventScroll:true});};grid.append(button);
+  }
+  host.append(grid);
+  const count=entries.filter(key=>key.startsWith(prefix+'-')).length;
+  document.getElementById('journalMonthCount').textContent=count?'이번 달 '+count+'일의 기록':'이 달에는 아직 기록이 없어요.';
+  const prev=entries.filter(key=>key<selected).at(-1),next=entries.find(key=>key>selected);
+  for(const [id,key] of [['jEntryPrev',prev],['jEntryNext',next]]){
+    const button=document.getElementById(id);button.disabled=!key;
+    button.onclick=()=>{if(key){const [yy,mm,dd]=key.split('-').map(Number);selectJournalDate(new Date(yy,mm-1,dd));}};
+  }
+}
+function shiftJournalMonth(delta){const date=new Date(journalMonth.y,journalMonth.m+delta,1);journalMonth={y:date.getFullYear(),m:date.getMonth()};buildJournalCalendar();}
+document.getElementById('jMonthPrev').onclick=()=>shiftJournalMonth(-1);
+document.getElementById('jMonthNext').onclick=()=>shiftJournalMonth(1);
+document.getElementById('jMonthPicker').onchange=event=>{const [y,m]=event.target.value.split('-').map(Number);if(y>=100&&y<=9999&&m>=1&&m<=12){journalMonth={y,m:m-1};buildJournalCalendar();}};
 const photoCache={};
 function journalPhotoIds(k){ db.photos[k]=db.photos[k]||[]; return db.photos[k]; }
 function compressImage(file){ return new Promise((res,rej)=>{ const img=new Image(); const url=URL.createObjectURL(file); img.onload=()=>{ URL.revokeObjectURL(url); function enc(maxDim,q){ let w=img.width,h=img.height; if(w>=h){ if(w>maxDim){h=Math.round(h*maxDim/w);w=maxDim;} } else { if(h>maxDim){w=Math.round(w*maxDim/h);h=maxDim;} } const c=document.createElement('canvas'); c.width=w;c.height=h; c.getContext('2d').drawImage(img,0,0,w,h); return c.toDataURL('image/jpeg',q); } let d=enc(1400,.72); if(d.length>950000) d=enc(1100,.6); if(d.length>950000) d=enc(800,.5); res(d); }; img.onerror=()=>rej(new Error('이미지를 읽을 수 없어요 (HEIC라면 JPEG로 시도해 주세요)')); img.src=url; }); }
@@ -755,7 +817,7 @@ document.getElementById('monPrev').onclick=()=>shiftMonth(-1);
 document.getElementById('monNext').onclick=()=>shiftMonth(1);
 document.getElementById('jPrev').onclick=()=>shiftJournal(-1);
 document.getElementById('jNext').onclick=()=>shiftJournal(1);
-document.getElementById('jToday').onclick=()=>{ viewJournal={y:Y,m:M,d:D}; renderJournal(); };
+document.getElementById('jToday').onclick=()=>selectJournalDate(new Date());
 document.getElementById('futPrev').onclick=()=>shiftFuture(-1);
 document.getElementById('futNext').onclick=()=>shiftFuture(1);
 document.getElementById('futToday').onclick=()=>{ viewFuture={y:Y,m:M}; buildFuture(); };
