@@ -174,6 +174,7 @@ test('page references existing modules and has no duplicate static IDs',()=>{
   const markup=html.slice(0,html.indexOf('<script type="module">'));
   const ids=[...markup.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(new Set(ids).size,ids.length);
   assert.ok(html.includes("!e.isComposing"));assert.ok(html.includes("getDocFromServer"));assert.ok(!html.includes('taskCycle'));
+  assert.ok(!html.includes('window.maplibregl'));
   for(const name of ['journal-core.mjs','journal-sync.mjs']) assert.ok(fs.existsSync(new URL('../'+name,import.meta.url)));
 });
 
