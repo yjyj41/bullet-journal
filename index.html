@@ -224,6 +224,8 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 .schedule-day{display:grid;grid-template-columns:1fr 1fr;height:936px;border-left:1px solid var(--rule);min-width:0}
 .schedule-lane{position:relative;min-width:0;height:936px;touch-action:pan-x pan-y;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 25px,var(--rule) 25px,var(--rule) 26px);background-size:100% 52px}
 .schedule-lane.actual{border-left:1px solid var(--ink-soft);background-color:rgba(255,255,255,.16)}
+.weekly-grid .schedule-day-head,.weekly-grid .schedule-day{border-left:2px solid var(--ink)}
+.weekly-grid .schedule-lane.actual,.weekly-grid .schedule-labels button+button{border-left:0}
 .schedule-selection{position:absolute;inset-inline:2px;pointer-events:none;background:rgba(52,48,42,.15);border:1px dashed var(--ink);z-index:5}
 .schedule-block{position:absolute;left:2px;right:2px;min-height:24px;border-left:3px solid #a8443a;background:#e9d5c9;border-radius:3px;overflow:hidden;box-shadow:0 1px 2px var(--shadow)}
 .schedule-block.color-1{border-color:#6f8a52;background:#dde2ca}.schedule-block.color-2{border-color:#4f7d8f;background:#d5e1df}.schedule-block.color-3{border-color:#a07a3c;background:#e9ddbd}.schedule-block.color-4{border-color:#8a5f86;background:#e6d8e2}
@@ -238,6 +240,13 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 .route-import{display:inline-flex;align-items:center}.journal-route-box{padding-bottom:15px;margin-bottom:15px;border-bottom:1px solid var(--rule)}.journal-route-box h3{margin-bottom:5px}.maplibregl-map{font-family:var(--sans)}
 .route-map .maplibregl-ctrl-group{background:#f7f4ec}.route-map .maplibregl-ctrl-attrib{font-size:10px;background:rgba(247,244,236,.82)}
 .route-stop{width:24px;height:24px;border:2px solid #fff;border-radius:50%;background:var(--ink);color:#fff;text-align:center;font:700 11px/20px var(--sans);box-shadow:0 1px 5px rgba(30,25,20,.35)}
+.monthly-route-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:10px}
+.monthly-route-card{min-width:0;border:1px solid var(--rule);border-radius:8px;background:var(--paper2);overflow:hidden}
+.monthly-route-card header{display:flex;align-items:baseline;gap:8px;padding:8px 10px 7px}
+.monthly-route-date{border:0;background:none;color:var(--ink);font-weight:700;cursor:pointer;padding:0}
+.monthly-route-summary{min-width:0;color:var(--ink-soft);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.monthly-route-map{height:135px;background:#e7e2d5}.monthly-route-map .maplibregl-canvas{cursor:default}
+.monthly-route-credit{margin-top:8px;font-size:10px;color:var(--ink-soft)}
 @media(max-width:640px){.route-map{height:260px}.journal-sidebar .route-map{height:230px}}
 </style>
 </head>
@@ -316,6 +325,7 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 </div>
 </div>
 </div>
+<details class="fold" id="monthlyRouteFold"><summary id="monthlyRouteTitle">이달의 동선</summary><div id="monthlyRoutes"></div></details>
 </section>
 <section class="panel" id="future">
 <div class="fut-head"><button class="navbtn" id="futPrev" type="button">‹</button><div class="ph" id="futureTitle">Future Log</div><button class="navbtn" id="futNext" type="button">›</button><button class="navbtn" id="futToday" type="button">현재</button></div>
@@ -587,7 +597,7 @@ function buildAll(){
   renderMonthly();
   buildFuture(); buildHabit(); renderJournal();
 }
-document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active')); t.classList.add('active'); document.getElementById(t.dataset.p).classList.add('active'); if(t.dataset.p==='weekly')renderWeekly(); if(t.dataset.p==='daily')renderSched(); });
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active')); t.classList.add('active'); document.getElementById(t.dataset.p).classList.add('active'); if(t.dataset.p==='weekly')renderWeekly(); if(t.dataset.p==='daily')renderSched(); if(t.dataset.p==='monthly')renderMonthly(); });
 
 function glyph(it){ if(it.type==='note') return {ch:'–',red:false}; if(it.type==='event') return {ch: it.status==='done'?'✓':'○', red:false}; switch(it.status){ case 'done': return {ch:'✓',red:false}; case 'migrated': return {ch:'›',red:true}; case 'scheduled': return {ch:'‹',red:true}; case 'strike': return {ch:'•',red:false}; default: return {ch:'•',red:false}; } }
 function statusClass(it){ if(it.status==='done') return 's-done'; if(it.status==='strike') return 's-strike'; if(it.status==='migrated') return 's-migrated'; if(it.status==='scheduled') return 's-scheduled'; return ''; }
@@ -605,6 +615,8 @@ function renderDaily(){
 function renderMonthly(){
   document.getElementById('monthTitle').textContent=viewMonth.y+'년 '+monthsK[viewMonth.m]+' · Monthly Log';
   buildCal(); renderList('monthly');
+  updateMonthlyRouteTitle();
+  if(document.getElementById('monthlyRouteFold').open)renderMonthlyRoutes();
 }
 function shiftMonth(delta){ let m=viewMonth.m+delta, y=viewMonth.y; while(m<0){m+=12;y--;} while(m>11){m-=12;y++;} viewMonth={y,m}; renderMonthly(); }
 function buildMiniCal(){
@@ -774,7 +786,71 @@ function renderRouteCard(id,key) {
   };
   requestAnimationFrame(mount);
 }
+let monthlyRouteObserver=null;
+function monthlyRouteEntries(){
+  const prefix=viewMonth.y+'-'+String(viewMonth.m+1).padStart(2,'0')+'-';
+  return Object.entries(db.routes||{}).filter(([key,route])=>key.startsWith(prefix)&&route&&routePointCount(route)>0).sort(([a],[b])=>a.localeCompare(b));
+}
+function updateMonthlyRouteTitle(){
+  const title=document.getElementById('monthlyRouteTitle');if(title)title.textContent='이달의 동선 · '+monthlyRouteEntries().length+'일';
+}
+function clearMonthlyRouteMaps(){
+  monthlyRouteObserver?.disconnect();monthlyRouteObserver=null;
+  document.querySelectorAll('#monthlyRoutes .monthly-route-card').forEach(card=>removeRouteMap(card));
+}
+function mountMonthlyRouteMap(card,mapHost,route){
+  if(!card.isConnected||!card.offsetParent||routeMaps.has(card))return;
+  const all=routeTrack(route);if(!all.length)return;
+  mapHost.textContent='';
+  const center=[all[0][1],all[0][0]],map=new maplibregl.Map({container:mapHost,style:'./terrain-style.json',center,zoom:all.length===1?14:10,interactive:false,attributionControl:false,fadeDuration:0});
+  routeMaps.set(card,map);
+  map.on('load',()=>{
+    if(!mapHost.isConnected)return;
+    const feature=points=>({type:'Feature',properties:{},geometry:{type:'LineString',coordinates:points.map(point=>[point[1],point[0]])}});
+    if(all.length>1){
+      map.addSource('route-track',{type:'geojson',data:feature(all)});
+      map.addLayer({id:'route-casing',type:'line',source:'route-track',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#fffdf7','line-width':6,'line-opacity':.9}});
+      map.addLayer({id:'route-line',type:'line',source:'route-track',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#b94b42','line-width':3,'line-opacity':.92}});
+    }
+    const recorded=(route.segments||[]).filter(segment=>segment.recorded&&segment.points.length>1).map(segment=>segment.points.map(point=>[point[1],point[0]]));
+    if(recorded.length){
+      map.addSource('route-recorded',{type:'geojson',data:{type:'Feature',properties:{},geometry:{type:'MultiLineString',coordinates:recorded}}});
+      map.addLayer({id:'route-recorded-line',type:'line',source:'route-recorded',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#7f302b','line-width':3.5,'line-opacity':.96}});
+    }
+    const visits=(route.visits||[]).map(visit=>({type:'Feature',properties:{},geometry:{type:'Point',coordinates:[visit.point[1],visit.point[0]]}}));
+    if(visits.length){
+      map.addSource('route-visits',{type:'geojson',data:{type:'FeatureCollection',features:visits}});
+      map.addLayer({id:'route-visits',type:'circle',source:'route-visits',paint:{'circle-radius':4,'circle-color':'#34302a','circle-stroke-width':1.5,'circle-stroke-color':'#fffdf7'}});
+    }
+  });
+  if(all.length>1){const bounds=new maplibregl.LngLatBounds();all.forEach(point=>bounds.extend([point[1],point[0]]));map.fitBounds(bounds,{padding:12,maxZoom:14,duration:0});}
+  requestAnimationFrame(()=>map.resize());
+}
+function renderMonthlyRoutes(){
+  const host=document.getElementById('monthlyRoutes');if(!host)return;
+  clearMonthlyRouteMaps();host.textContent='';
+  const entries=monthlyRouteEntries();updateMonthlyRouteTitle();
+  if(!entries.length){const empty=document.createElement('div');empty.className='route-empty';empty.textContent='이 달에 저장된 동선이 없어요. 오늘 탭에서 Timeline.json을 불러오면 날짜별 미리보기가 생겨요.';host.append(empty);return;}
+  const grid=document.createElement('div');grid.className='monthly-route-grid';
+  for(const [key,route] of entries){
+    const card=document.createElement('article');card.className='monthly-route-card';card.dataset.routeDay=key;
+    const header=document.createElement('header'),date=document.createElement('button');date.type='button';date.className='monthly-route-date';
+    const value=new Date(key+'T12:00:00');date.textContent=(value.getMonth()+1)+'/'+value.getDate()+' '+wdK[value.getDay()];
+    date.title=key+' 오늘 탭에서 크게 보기';date.onclick=()=>{selectDay(value);document.querySelector('[data-p="daily"]').click();document.getElementById('dailyRouteFold').open=true;};
+    const summary=document.createElement('span');summary.className='monthly-route-summary';summary.textContent=routeSummary(route);
+    const mapHost=document.createElement('div');mapHost.className='monthly-route-map';mapHost.setAttribute('aria-label',key+' 동선 미리보기');
+    header.append(date,summary);card.append(header,mapHost);grid.append(card);
+  }
+  const credit=document.createElement('p');credit.className='monthly-route-credit';credit.textContent='지도 © OpenStreetMap contributors · OpenFreeMap · 고도 데이터 Mapzen/AWS';
+  host.append(grid,credit);
+  const mountCard=card=>mountMonthlyRouteMap(card,card.querySelector('.monthly-route-map'),db.routes[card.dataset.routeDay]);
+  if('IntersectionObserver' in window){
+    monthlyRouteObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting)mountCard(entry.target);else removeRouteMap(entry.target);}),{rootMargin:'240px 0px'});
+    grid.querySelectorAll('.monthly-route-card').forEach(card=>monthlyRouteObserver.observe(card));
+  }else grid.querySelectorAll('.monthly-route-card').forEach(mountCard);
+}
 document.getElementById('dailyRouteFold').ontoggle=()=>{if(document.getElementById('dailyRouteFold').open)renderRouteCard('dailyRoute',dayKey(viewDaily.y,viewDaily.m,viewDaily.d));};
+document.getElementById('monthlyRouteFold').ontoggle=()=>{if(document.getElementById('monthlyRouteFold').open)renderMonthlyRoutes();else clearMonthlyRouteMaps();};
 document.getElementById('timelineInput').onchange=async event=>{
   const file=event.target.files[0];event.target.value='';if(!file)return;
   try{
