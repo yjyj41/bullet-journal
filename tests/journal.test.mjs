@@ -3,9 +3,15 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {clone,emptyJournal,mergeJournal,resolveJournal,validateJournal,moveTask,previousOpenTasks,journalEntryDates} from '../journal-core.mjs';
 import {createJournalSync} from '../journal-sync.mjs';
-import {weekDates,scheduleKind,scheduleItems,saveSchedule,slotTime} from '../schedule.mjs';
+import {weekDates,scheduleKind,scheduleItems,saveSchedule,slotTime,randomScheduleColor} from '../schedule.mjs';
 
 const dateKey=date=>date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
+test('new actual schedule colors cover the five-color palette and remain in range',()=>{
+  assert.deepEqual([0,.2,.4,.6,.8,.999999].map(value=>randomScheduleColor(()=>value)),[0,1,2,3,4,4]);
+  assert.equal(randomScheduleColor(()=>1),4);
+  assert.equal(randomScheduleColor(()=>Number.NaN),0);
+  for(let i=0;i<100;i++)assert.ok(randomScheduleColor()>=0&&randomScheduleColor()<=4);
+});
 test('Weekly is Monday to Sunday across a year boundary, including Sunday selection',()=>{
   const expected=['2025-12-29','2025-12-30','2025-12-31','2026-01-01','2026-01-02','2026-01-03','2026-01-04'];
   assert.deepEqual(weekDates(new Date(2026,0,1)).map(dateKey),expected);
