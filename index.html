@@ -771,8 +771,7 @@ document.getElementById('timelineInput').onchange=async event=>{
     const imported=parseTimelineExport(JSON.parse(await file.text())),days=Object.keys(imported),points=Object.values(imported).reduce((sum,route)=>sum+routePointCount(route),0);
     const next={...(db.routes||{}),...imported},candidate={...db,routes:next};
     if(new TextEncoder().encode(JSON.stringify(candidate)).length>850000)throw new Error('클라우드 저장 한도에 가까워요. 더 짧은 기간의 Timeline 파일을 사용해 주세요.');
-    changeWithUndo(days.length+'일의 동선을 불러왔어요.',()=>{db.routes=next;});
-    notify(days.length+'일 · 위치 점 '+points+'개를 불러왔어요.');
+    changeWithUndo(days.length+'일 · 위치 점 '+points+'개를 불러왔어요.',()=>{db.routes=next;});
   }catch(error){alert('동선 불러오기 실패: '+error.message);}
 };
 function selectDay(date) { viewDaily={y:date.getFullYear(),m:date.getMonth(),d:date.getDate()}; renderDaily(); buildMiniCal(); }
