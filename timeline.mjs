@@ -53,7 +53,7 @@ export function parseTimelineExport(value) {
     addUnique(points,point(item.activity?.start));
     for(const step of item.timelinePath||[]) addUnique(points,point(step?.point));
     addUnique(points,point(item.activity?.end));
-    if(points.length) route.segments.push({start,end,mode:String(item.activity?.topCandidate?.type||'').slice(0,40),points:spaced(points)});
+    if(points.length) route.segments.push({start,end,mode:String(item.activity?.topCandidate?.type||'').slice(0,40),recorded:Array.isArray(item.timelinePath)&&item.timelinePath.length>1,points:spaced(points)});
     const distance=Number(item.activity?.distanceMeters);
     if(Number.isFinite(distance)&&distance>0) route.distanceMeters+=Math.round(distance);
   }
@@ -75,17 +75,25 @@ export function validateRoutes(routes) {
     if(segments.length>500||visits.length>500) throw new Error('동선 기록이 너무 커요.');
     const validPoint=p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)&&Math.abs(p[0])<=90&&Math.abs(p[1])<=180;
     const short=(value,max)=>typeof value==='string'&&value.length<=max;
-    if(segments.some(s=>!s||typeof s!=='object'||!Array.isArray(s.points)||s.points.length>240||!s.points.every(validPoint)||!short(s.start||'',5)||!short(s.end||'',5)||!short(s.mode||'',40))) throw new Error('동선 경로 형식 오류');
+    if(segments.some(s=>!s||typeof s!=='object'||!Array.isArray(s.points)||s.points.length>240||!s.points.every(validPoint)||!short(s.start||'',5)||!short(s.end||'',5)||!short(s.mode||'',40)||(s.recorded!=null&&typeof s.recorded!=='boolean'))) throw new Error('동선 경로 형식 오류');
     if(visits.some(v=>!v||typeof v!=='object'||!validPoint(v.point)||!short(v.start||'',5)||!short(v.end||'',5)||!short(v.type||'',30))) throw new Error('동선 방문 기록 형식 오류');
     const distance=Number(route.distanceMeters)||0;
     if(!Number.isFinite(distance)||distance<0||distance>10000000) throw new Error('동선 거리 형식 오류');
-    clean[day]={segments:segments.map(s=>({start:s.start||'',end:s.end||'',mode:s.mode||'',points:s.points.map(p=>[p[0],p[1]])})),visits:visits.map(v=>({start:v.start||'',end:v.end||'',type:v.type||'',point:[v.point[0],v.point[1]]})),distanceMeters:distance};
+    clean[day]={segments:segments.map(s=>({start:s.start||'',end:s.end||'',mode:s.mode||'',recorded:!!s.recorded,points:s.points.map(p=>[p[0],p[1]])})),visits:visits.map(v=>({start:v.start||'',end:v.end||'',type:v.type||'',point:[v.point[0],v.point[1]]})),distanceMeters:distance};
   }
   return clean;
 }
 
 export function routePointCount(route) {
   return (route?.segments||[]).reduce((sum,segment)=>sum+segment.points.length,0)+(route?.visits||[]).length;
+}
+
+export function routeTrack(route) {
+  const minute=value=>{const match=/^(\d{2}):(\d{2})$/.exec(value||'');return match?Number(match[1])*60+Number(match[2]):9999;};
+  const pieces=[...(route?.segments||[]).map((segment,index)=>({time:minute(segment.start),index,points:segment.points})),...(route?.visits||[]).map((visit,index)=>({time:minute(visit.start),index:index+10000,points:[visit.point]}))].sort((a,b)=>a.time-b.time||a.index-b.index);
+  const result=[];
+  for(const piece of pieces)for(const current of piece.points||[])addUnique(result,current);
+  return result;
 }
 
 export function routeSummary(route) {

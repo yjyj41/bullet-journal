@@ -236,6 +236,8 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 .route-map{height:310px;width:100%;border:1px solid var(--rule);border-radius:7px;background:var(--paper2);overflow:hidden}.journal-sidebar .route-map{height:210px}.route-empty{padding:14px 10px;border:1px dashed var(--rule);border-radius:7px;color:var(--ink-soft);font-size:13px;line-height:1.6}
 .route-events{display:grid;gap:5px;margin-top:9px;max-height:150px;overflow:auto}.route-event{display:flex;gap:8px;font-size:12px;padding-bottom:4px;border-bottom:1px dotted var(--rule)}.route-event time{color:var(--ink-soft);white-space:nowrap}.route-event span{overflow-wrap:anywhere}
 .route-import{display:inline-flex;align-items:center}.journal-route-box{padding-bottom:15px;margin-bottom:15px;border-bottom:1px solid var(--rule)}.journal-route-box h3{margin-bottom:5px}.leaflet-container{font-family:var(--sans)}
+.route-map .leaflet-tile-pane{filter:grayscale(.92) saturate(.22) brightness(1.08) contrast(.88)}.route-map .leaflet-control-zoom a{background:#f7f4ec;color:var(--ink);border-color:var(--rule)}
+.route-stop{width:24px;height:24px;border:2px solid #fff;border-radius:50%;background:var(--ink);color:#fff;text-align:center;font:700 11px/20px var(--sans);box-shadow:0 1px 5px rgba(30,25,20,.35)}
 @media(max-width:640px){.route-map{height:260px}.journal-sidebar .route-map{height:230px}}
 </style>
 </head>
@@ -392,7 +394,7 @@ import { getFirestore, doc, getDoc, getDocFromServer, setDoc, deleteDoc, runTran
 import {clone, emptyJournal, mergeJournal, validateJournal, moveTask, previousOpenTasks, journalEntryDates} from './journal-core.mjs';
 import {createJournalSync} from './journal-sync.mjs';
 import {renderSchedule,weekDates,scheduleKind,slotTime,saveSchedule} from './schedule.mjs';
-import {parseTimelineExport,routePointCount,routeSummary} from './timeline.mjs';
+import {parseTimelineExport,routePointCount,routeSummary,routeTrack} from './timeline.mjs';
 const firebaseConfig = {
   apiKey: "AIzaSyD58SEKBUCyg4Q6w2_tbw8MfsJivKr4jVU",
   authDomain: "bullet-journal-b359c.firebaseapp.com",
@@ -750,7 +752,7 @@ function renderRouteCard(id,key) {
   host.append(toolbar);
   if(!route){const empty=document.createElement('div');empty.className='route-empty';empty.textContent='Google 지도에서 내보낸 Timeline.json을 불러오면 이 날짜의 이동 경로가 나타나요. 원본 파일은 서버에 업로드하지 않아요.';host.append(empty);return;}
   const mapHost=document.createElement('div');mapHost.className='route-map';mapHost.setAttribute('aria-label',key+' 이동 경로 지도');host.append(mapHost);
-  const note=document.createElement('p');note.className='hint';note.textContent='OpenStreetMap 지도 위에 Google 내보내기 좌표를 연결했어요. 실제 도로와 조금 다를 수 있어요.';host.append(note);
+  const note=document.createElement('p');note.className='hint';note.textContent='Google Timeline의 시간순 위치를 연결했어요. 내보내기에 좌표가 없는 구간은 직선으로 보일 수 있어요.';host.append(note);
   const events=[...(route.visits||[]).map(v=>({time:v.start+(v.end?'–'+v.end:''),text:visitTypes[v.type]||'방문 장소',point:v.point})),...(route.segments||[]).map(s=>({time:s.start+(s.end?'–'+s.end:''),text:routeModes[s.mode]||'이동 구간',point:s.points?.[0]}))].sort((a,b)=>a.time.localeCompare(b.time));
   if(events.length){const list=document.createElement('div');list.className='route-events';for(const event of events){const row=document.createElement('div');row.className='route-event';const time=document.createElement('time');time.textContent=event.time||'시간 미상';const text=document.createElement('span');text.textContent=event.text;row.append(time,text);list.append(row);}host.append(list);}
   const mount=()=>{
@@ -758,9 +760,10 @@ function renderRouteCard(id,key) {
     if(!window.L){mapHost.textContent='지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.';return;}
     const map=L.map(mapHost,{scrollWheelZoom:false});routeMaps.set(host,map);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
-    const all=[];
-    for(const segment of route.segments||[]){for(const p of segment.points)all.push(p);if(segment.points.length>1)L.polyline(segment.points,{color:'#a8443a',weight:4,opacity:.82}).addTo(map);else if(segment.points[0])L.circleMarker(segment.points[0],{radius:4,color:'#a8443a'}).addTo(map);}
-    for(const visit of route.visits||[]){all.push(visit.point);L.circleMarker(visit.point,{radius:6,color:'#34302a',weight:2,fillColor:'#f3efe3',fillOpacity:1}).bindPopup((visitTypes[visit.type]||'방문 장소')+' · '+(visit.start||'시간 미상')).addTo(map);}
+    const all=routeTrack(route);
+    if(all.length>1){L.polyline(all,{color:'#fffdf7',weight:9,opacity:.92,lineJoin:'round',lineCap:'round'}).addTo(map);L.polyline(all,{color:'#b94b42',weight:4,opacity:.9,lineJoin:'round',lineCap:'round'}).addTo(map);}
+    for(const segment of route.segments||[]){if(segment.recorded&&segment.points.length>1){L.polyline(segment.points,{color:'#7f302b',weight:4.5,opacity:.94,lineJoin:'round',lineCap:'round'}).addTo(map);}}
+    (route.visits||[]).forEach((visit,index)=>{const icon=L.divIcon({className:'',html:'<div class="route-stop">'+(index+1)+'</div>',iconSize:[24,24],iconAnchor:[12,12]});L.marker(visit.point,{icon}).bindPopup((index+1)+'. '+(visitTypes[visit.type]||'방문 장소')+' · '+(visit.start||'시간 미상')).addTo(map);});
     if(all.length===1)map.setView(all[0],15);else if(all.length)map.fitBounds(L.latLngBounds(all),{padding:[18,18],maxZoom:16});
     setTimeout(()=>map.invalidateSize(),0);
   };
