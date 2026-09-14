@@ -757,7 +757,7 @@ function renderRouteCard(id,key) {
   if(events.length){const list=document.createElement('div');list.className='route-events';for(const event of events){const row=document.createElement('div');row.className='route-event';const time=document.createElement('time');time.textContent=event.time||'시간 미상';const text=document.createElement('span');text.textContent=event.text;row.append(time,text);list.append(row);}host.append(list);}
   const mount=()=>{
     if(!mapHost.isConnected||!mapHost.offsetParent||routeMaps.has(host))return;
-    if(!window.maplibregl){mapHost.textContent='지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.';return;}
+    if(!maplibregl?.Map){mapHost.textContent='지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.';return;}
     const all=routeTrack(route),center=all[0]?[all[0][1],all[0][0]]:[0,0];
     const map=new maplibregl.Map({container:mapHost,style:'./terrain-style.json',center,zoom:all.length===1?15:10,attributionControl:true});routeMaps.set(host,map);
     map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
