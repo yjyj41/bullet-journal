@@ -177,6 +177,13 @@ test('page references existing modules and has no duplicate static IDs',()=>{
   for(const name of ['journal-core.mjs','journal-sync.mjs']) assert.ok(fs.existsSync(new URL('../'+name,import.meta.url)));
 });
 
+test('terrain map style is keyless and keeps hillshading',()=>{
+  const style=JSON.parse(fs.readFileSync(new URL('../terrain-style.json',import.meta.url),'utf8'));
+  assert.equal(style.version,8);assert.equal(style.sources.openmaptiles.url,'https://tiles.openfreemap.org/planet/latest');
+  assert.equal(style.sources.hillshading.type,'raster-dem');assert.equal(style.sources.hillshading.encoding,'terrarium');
+  assert.ok(style.layers.some(layer=>layer.type==='hillshade'));assert.ok(!JSON.stringify(style).includes('{key}'));
+});
+
 test('undo back to the acknowledged state reports saved instead of remaining pending',async t=>{
   const h=harness();t.after(()=>h.engine.stop());await h.engine.start(emptyJournal());
   const data=clone(h.remote);data.journal.today='temporary';h.engine.edit(data);h.engine.edit(h.remote);
