@@ -175,6 +175,7 @@ test('page references existing modules and has no duplicate static IDs',()=>{
   const ids=[...markup.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(new Set(ids).size,ids.length);
   assert.ok(html.includes("!e.isComposing"));assert.ok(html.includes("getDocFromServer"));assert.ok(!html.includes('taskCycle'));
   assert.ok(!html.includes('window.maplibregl'));
+  assert.ok(html.includes('id="monthlyRouteFold"'));assert.ok(html.includes('.weekly-grid .schedule-day-head,.weekly-grid .schedule-day{border-left:2px solid var(--ink)}'));
   for(const name of ['journal-core.mjs','journal-sync.mjs']) assert.ok(fs.existsSync(new URL('../'+name,import.meta.url)));
 });
 
