@@ -4,6 +4,24 @@ import fs from 'node:fs';
 import {clone,emptyJournal,mergeJournal,resolveJournal,validateJournal,moveTask,previousOpenTasks,journalEntryDates} from '../journal-core.mjs';
 import {createJournalSync} from '../journal-sync.mjs';
 import {weekDates,scheduleKind,scheduleItems,saveSchedule,slotTime,randomScheduleColor} from '../schedule.mjs';
+import {parseTimelineExport,routePointCount,routeSummary,validateRoutes} from '../timeline.mjs';
+
+test('Google Timeline arrays become compact daily routes',()=>{
+  const routes=parseTimelineExport([
+    {startTime:'2026-09-09T08:00:00+01:00',endTime:'2026-09-09T08:30:00+01:00',activity:{start:'geo:51.5,-0.1',end:'geo:51.51,-0.11',distanceMeters:'1250',topCandidate:{type:'WALKING'}}},
+    {startTime:'2026-09-09T09:00:00+01:00',endTime:'2026-09-09T10:00:00+01:00',visit:{topCandidate:{semanticType:'WORK',placeLocation:'geo:51.51,-0.11'}}}
+  ]);
+  const route=routes['2026-09-09'];
+  assert.equal(route.segments.length,1);assert.equal(route.visits.length,1);assert.equal(route.distanceMeters,1250);
+  assert.equal(routePointCount(route),3);assert.equal(routeSummary(route),'방문 1곳 · 1.3km 이동 · 이동 1구간');
+  assert.deepEqual(validateRoutes(routes),routes);
+});
+
+test('Timeline parser accepts semanticSegments wrapper and rejects non-location exports',()=>{
+  const routes=parseTimelineExport({semanticSegments:[{startTime:'2026-09-10T12:00:00Z',endTime:'2026-09-10T12:05:00Z',timelinePath:[{point:'geo:37.5,127.0'},{point:'invalid'}]}]});
+  assert.equal(Object.keys(routes).length,1);assert.equal(Object.values(routes)[0].segments[0].points.length,1);
+  assert.throws(()=>parseTimelineExport({items:[]}));assert.throws(()=>parseTimelineExport([]));
+});
 
 const dateKey=date=>date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
 test('new actual schedule colors cover the five-color palette and remain in range',()=>{
@@ -44,11 +62,11 @@ test('schedule range rejects reversed times and supports midnight endpoint',()=>
 });
 
 const task = text => ({type:'task',status:'open',text,pri:false});
-test('journal calendar finds text, reflection and photo-only dates without empty drafts',()=>{
+test('journal calendar finds text, reflection, photo and route-only dates without empty drafts',()=>{
   const data=emptyJournal();data.journal={'2026-09-09':'일기','2026-09-08':'  ','2026-09-07':''};
-  data.reflections={'2026-09-09':'같은 날','2024-02-29':'윤년 기록'};data.photos={'2025-12-31':['photo'],'2026-01-01':[]};
+  data.reflections={'2026-09-09':'같은 날','2024-02-29':'윤년 기록'};data.photos={'2025-12-31':['photo'],'2026-01-01':[]};data.routes={'2026-02-03':{segments:[],visits:[{point:[37.5,127],start:'',end:'',type:''}],distanceMeters:0}};
   const before=JSON.stringify(data);
-  assert.deepEqual(journalEntryDates(data),['2024-02-29','2025-12-31','2026-09-09']);
+  assert.deepEqual(journalEntryDates(data),['2024-02-29','2025-12-31','2026-02-03','2026-09-09']);
   assert.equal(JSON.stringify(data),before);
 });
 test('journal calendar supports old data without reflection or photo maps',()=>{

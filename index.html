@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--sans:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;--paper:#f3efe3;--paper2:#efe9da;--dot:#cdc4ad;--ink:#34302a;--ink-soft:#7c7565;--red:#a8443a;--rule:#d8cfb8;--shadow:rgba(60,50,30,.18);}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -231,6 +232,11 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 .weekly-nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.weekly-nav .ph{margin-right:auto;line-height:1.4}.weekly-nav input{max-width:155px;min-height:40px;color:var(--ink);background:transparent;border:1px solid var(--rule);border-radius:4px;padding:4px}
 .schedule-field{display:flex;flex-direction:column;gap:6px;margin:12px 0;font-size:14px}.schedule-field select,.schedule-field textarea{width:100%;padding:8px;border:1px solid var(--rule);border-radius:4px;background:var(--paper2);color:var(--ink);font-size:16px}.schedule-times{display:grid;grid-template-columns:1fr 1fr;gap:12px}.weekly-grid .schedule-block-edit{font-size:12px}
 @media(max-width:640px){.schedule-grid:not(.weekly-grid){min-width:290px;grid-template-columns:36px minmax(0,1fr)}.weekly-nav .ph{width:100%}.schedule-block-edit{font-size:13px}}
+.route-card{min-width:0}.route-toolbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:8px 0}.route-toolbar .route-summary{flex:1;min-width:150px;font-size:13px;color:var(--ink-soft)}
+.route-map{height:310px;width:100%;border:1px solid var(--rule);border-radius:7px;background:var(--paper2);overflow:hidden}.journal-sidebar .route-map{height:210px}.route-empty{padding:14px 10px;border:1px dashed var(--rule);border-radius:7px;color:var(--ink-soft);font-size:13px;line-height:1.6}
+.route-events{display:grid;gap:5px;margin-top:9px;max-height:150px;overflow:auto}.route-event{display:flex;gap:8px;font-size:12px;padding-bottom:4px;border-bottom:1px dotted var(--rule)}.route-event time{color:var(--ink-soft);white-space:nowrap}.route-event span{overflow-wrap:anywhere}
+.route-import{display:inline-flex;align-items:center}.journal-route-box{padding-bottom:15px;margin-bottom:15px;border-bottom:1px solid var(--rule)}.journal-route-box h3{margin-bottom:5px}.leaflet-container{font-family:var(--sans)}
+@media(max-width:640px){.route-map{height:260px}.journal-sidebar .route-map{height:230px}}
 </style>
 </head>
 <body>
@@ -282,6 +288,7 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 <div class="sched-hint">왼쪽은 계획, 오른쪽은 실제예요. 빈 곳을 누르거나 드래그해서 기록하세요. 블록을 누르면 내용과 시간을 편집할 수 있어요.</div>
 <div class="schedule-scroll" id="dailySchedule"></div>
 </details>
+<details class="fold" id="dailyRouteFold"><summary id="dailyRouteTitle">오늘의 동선</summary><div class="route-card" id="dailyRoute"></div></details>
 </section>
 <section class="panel" id="weekly">
 <div class="weekly-nav"><div class="ph" id="weeklyTitle">Weekly</div><button class="navbtn" id="weekPrev" aria-label="지난주">‹</button><input type="date" id="weekPicker" aria-label="보고 싶은 주의 날짜"><button class="navbtn" id="weekNext" aria-label="다음 주">›</button><button class="navbtn" id="weekToday">이번 주</button></div>
@@ -322,9 +329,9 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 <div class="habit-edit"><h5>습관 항목 편집</h5><div id="habitEditList"></div><button class="he-add" id="habitAdd">＋ 항목 추가</button></div>
 </section>
 <section class="panel" id="journal">
-<div class="journal-layout"><aside class="journal-sidebar" aria-label="일기 날짜 탐색"><h3>지난 일기 찾아보기</h3>
+<div class="journal-layout"><aside class="journal-sidebar" aria-label="일기 날짜 탐색"><section class="journal-route-box"><h3>그날의 동선</h3><div class="route-card" id="journalRoute"></div></section><h3>지난 일기 찾아보기</h3>
 <div class="journal-month-nav"><button class="navbtn" id="jMonthPrev" aria-label="이전 달">‹</button><input type="month" id="jMonthPicker" aria-label="일기 달 선택"><button class="navbtn" id="jMonthNext" aria-label="다음 달">›</button></div>
-<div id="journalCalendar" class="minical"></div><p class="hint" id="journalMonthCount" aria-live="polite"></p><p class="hint">점이 있는 날에는 일기·사진·하루 한 줄이 있어요.</p>
+<div id="journalCalendar" class="minical"></div><p class="hint" id="journalMonthCount" aria-live="polite"></p><p class="hint">점이 있는 날에는 일기·사진·하루 한 줄·동선이 있어요.</p>
 <div class="journal-entry-nav"><button class="reset" id="jEntryPrev">← 이전 기록</button><button class="reset" id="jEntryNext">다음 기록 →</button></div>
 </aside><div class="journal-editor"><div class="dnav"><button class="navbtn" id="jPrev" aria-label="전날 일기" type="button">‹</button><div class="ph" id="journalDate" style="margin:0">Journal</div><button class="navbtn" id="jNext" aria-label="다음 날 일기" type="button">›</button><button class="navbtn" id="jToday" type="button">오늘</button></div>
 <hr class="rule">
@@ -376,6 +383,8 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 </form></dialog>
 <div id="printArea"></div>
 <div id="lightbox"><img alt="사진"></div>
+<input type="file" id="timelineInput" accept="application/json,.json" hidden>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -383,6 +392,7 @@ import { getFirestore, doc, getDoc, getDocFromServer, setDoc, deleteDoc, runTran
 import {clone, emptyJournal, mergeJournal, validateJournal, moveTask, previousOpenTasks, journalEntryDates} from './journal-core.mjs';
 import {createJournalSync} from './journal-sync.mjs';
 import {renderSchedule,weekDates,scheduleKind,slotTime,saveSchedule} from './schedule.mjs';
+import {parseTimelineExport,routePointCount,routeSummary} from './timeline.mjs';
 const firebaseConfig = {
   apiKey: "AIzaSyD58SEKBUCyg4Q6w2_tbw8MfsJivKr4jVU",
   authDomain: "bullet-journal-b359c.firebaseapp.com",
@@ -420,7 +430,7 @@ function normalize(){
   // migrate legacy cal (d{day}, shared across months) -> this month's cal2 (c{Y}-{M}-{day})
   for(const key in db.cal){ if(/^d\d+$/.test(key) && db.cal[key]){ const day=key.slice(1); const nk='c'+Y+'-'+M+'-'+day; if(db.cal2[nk]==null) db.cal2[nk]=db.cal[key]; } }
   db.cal={};
-  db.journal=db.journal||{}; db.reflections=db.reflections||{}; db.habitLog=db.habitLog||{}; db.photos=db.photos||{};
+  db.journal=db.journal||{}; db.reflections=db.reflections||{}; db.habitLog=db.habitLog||{}; db.photos=db.photos||{}; db.routes=db.routes||{};
   if(!db.habits){ db.habits=[{id:'default-water',name:'물'},{id:'default-exercise',name:'운동'},{id:'default-reading',name:'독서'},{id:'default-meditation',name:'명상'},{id:'default-sleep',name:'수면'}]; }
   // migrate legacy habit (`${d}-${h}` index-based, current month) -> habitLog keyed by dayKey|habitId
   let migH=false;
@@ -587,7 +597,8 @@ function nextDayKey(){ const nd=new Date(viewDaily.y,viewDaily.m,viewDaily.d+1);
 function renderDaily(){
   const v=viewDaily, isToday=(v.y===Y&&v.m===M&&v.d===D);
   document.getElementById('dailyDate').textContent=monthsK[v.m]+' '+v.d+'일 · '+wdK[new Date(v.y,v.m,v.d).getDay()]+'요일'+(isToday?' · 오늘':'');
-  renderList('daily'); renderSched(); renderToday();
+  document.getElementById('dailyRouteTitle').textContent=isToday?'오늘의 동선':'이날의 동선';
+  renderList('daily'); renderSched(); renderToday(); renderRouteCard('dailyRoute',dayKey(v.y,v.m,v.d));
 }
 function renderMonthly(){
   document.getElementById('monthTitle').textContent=viewMonth.y+'년 '+monthsK[viewMonth.m]+' · Monthly Log';
@@ -601,7 +612,7 @@ function buildMiniCal(){
   let h='<div class="mc-head"><span class="mc-title">'+y+'년 '+monthsK[m]+'</span><span class="mc-nav"><button class="navbtn" id="mcPrev" type="button">‹</button><button class="navbtn" id="mcToday" type="button">오늘</button><button class="navbtn" id="mcNext" type="button">›</button></span></div><div class="mc-grid">';
   for(let i=0;i<7;i++) h+='<div class="mc-wd'+(i===0?' sun':'')+'">'+wdK[i]+'</div>';
   for(let i=0;i<first;i++) h+='<div class="mc-cell empty"></div>';
-  for(let d=1;d<=days;d++){ const isT=(y===Y&&m===M&&d===D), isS=(d===viewDaily.d), has=((db.days[dayKey(y,m,d)]||[]).length>0)||((db.sched[dayKey(y,m,d)]||[]).length>0); h+='<div class="mc-cell'+(isT?' today':'')+(isS?' sel':'')+(has?' has':'')+'" data-d="'+d+'">'+d+'</div>'; }
+  for(let d=1;d<=days;d++){ const isT=(y===Y&&m===M&&d===D), isS=(d===viewDaily.d), k=dayKey(y,m,d), has=((db.days[k]||[]).length>0)||((db.sched[k]||[]).length>0)||!!db.routes[k]; h+='<div class="mc-cell'+(isT?' today':'')+(isS?' sel':'')+(has?' has':'')+'" data-d="'+d+'">'+d+'</div>'; }
   h+='</div>'; host.innerHTML=h;
   host.querySelectorAll('.mc-cell[data-d]').forEach(c=>c.onclick=()=>{ viewDaily={y,m,d:+c.dataset.d}; buildMiniCal(); renderDaily(); });
   document.getElementById('mcPrev').onclick=()=>{ let nm=m-1,ny=y; if(nm<0){nm=11;ny--;} viewDaily={y:ny,m:nm,d:1}; buildMiniCal(); renderDaily(); };
@@ -722,6 +733,48 @@ function renderToday() {
   if (document.activeElement!==reflection) reflection.value=db.reflections[key] || '';
   reflection.oninput=() => { if (reflection.value) db.reflections[key]=reflection.value; else delete db.reflections[key]; save(); };
 }
+const routeMaps=new Map();
+const routeModes={WALKING:'도보',IN_PASSENGER_VEHICLE:'자동차',IN_BUS:'버스',IN_TRAIN:'기차',IN_SUBWAY:'지하철',CYCLING:'자전거',RUNNING:'달리기',FLYING:'비행',UNKNOWN_ACTIVITY_TYPE:'이동'};
+const visitTypes={HOME:'집',WORK:'직장',TYPE_HOME:'집',TYPE_WORK:'직장',UNKNOWN:'방문 장소',TYPE_UNKNOWN:'방문 장소'};
+function removeRouteMap(host){const map=routeMaps.get(host);if(map){map.remove();routeMaps.delete(host);}}
+function renderRouteCard(id,key) {
+  const host=document.getElementById(id); if(!host)return; removeRouteMap(host); host.textContent='';
+  const route=db.routes[key],toolbar=document.createElement('div');toolbar.className='route-toolbar';
+  const summary=document.createElement('div');summary.className='route-summary';summary.textContent=routeSummary(route);
+  const load=document.createElement('button');load.type='button';load.className='reset route-import';load.textContent='Timeline 불러오기';load.onclick=()=>document.getElementById('timelineInput').click();
+  toolbar.append(summary,load);
+  if(route){const del=document.createElement('button');del.type='button';del.className='reset';del.textContent='이날 삭제';del.onclick=()=>{if(confirm(key+' 동선을 삭제할까요?'))changeWithUndo('이날의 동선을 삭제했어요.',()=>delete db.routes[key]);};toolbar.append(del);}
+  host.append(toolbar);
+  if(!route){const empty=document.createElement('div');empty.className='route-empty';empty.textContent='Google 지도에서 내보낸 Timeline.json을 불러오면 이 날짜의 이동 경로가 나타나요. 원본 파일은 서버에 업로드하지 않아요.';host.append(empty);return;}
+  const mapHost=document.createElement('div');mapHost.className='route-map';mapHost.setAttribute('aria-label',key+' 이동 경로 지도');host.append(mapHost);
+  const note=document.createElement('p');note.className='hint';note.textContent='OpenStreetMap 지도 위에 Google 내보내기 좌표를 연결했어요. 실제 도로와 조금 다를 수 있어요.';host.append(note);
+  const events=[...(route.visits||[]).map(v=>({time:v.start+(v.end?'–'+v.end:''),text:visitTypes[v.type]||'방문 장소',point:v.point})),...(route.segments||[]).map(s=>({time:s.start+(s.end?'–'+s.end:''),text:routeModes[s.mode]||'이동 구간',point:s.points?.[0]}))].sort((a,b)=>a.time.localeCompare(b.time));
+  if(events.length){const list=document.createElement('div');list.className='route-events';for(const event of events){const row=document.createElement('div');row.className='route-event';const time=document.createElement('time');time.textContent=event.time||'시간 미상';const text=document.createElement('span');text.textContent=event.text;row.append(time,text);list.append(row);}host.append(list);}
+  const mount=()=>{
+    if(!mapHost.isConnected||!mapHost.offsetParent||routeMaps.has(host))return;
+    if(!window.L){mapHost.textContent='지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.';return;}
+    const map=L.map(mapHost,{scrollWheelZoom:false});routeMaps.set(host,map);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
+    const all=[];
+    for(const segment of route.segments||[]){for(const p of segment.points)all.push(p);if(segment.points.length>1)L.polyline(segment.points,{color:'#a8443a',weight:4,opacity:.82}).addTo(map);else if(segment.points[0])L.circleMarker(segment.points[0],{radius:4,color:'#a8443a'}).addTo(map);}
+    for(const visit of route.visits||[]){all.push(visit.point);L.circleMarker(visit.point,{radius:6,color:'#34302a',weight:2,fillColor:'#f3efe3',fillOpacity:1}).bindPopup((visitTypes[visit.type]||'방문 장소')+' · '+(visit.start||'시간 미상')).addTo(map);}
+    if(all.length===1)map.setView(all[0],15);else if(all.length)map.fitBounds(L.latLngBounds(all),{padding:[18,18],maxZoom:16});
+    setTimeout(()=>map.invalidateSize(),0);
+  };
+  requestAnimationFrame(mount);
+}
+document.getElementById('dailyRouteFold').ontoggle=()=>{if(document.getElementById('dailyRouteFold').open)renderRouteCard('dailyRoute',dayKey(viewDaily.y,viewDaily.m,viewDaily.d));};
+document.getElementById('timelineInput').onchange=async event=>{
+  const file=event.target.files[0];event.target.value='';if(!file)return;
+  try{
+    if(file.size>50*1024*1024)throw new Error('50MB 이하의 Timeline JSON을 선택해 주세요.');
+    const imported=parseTimelineExport(JSON.parse(await file.text())),days=Object.keys(imported),points=Object.values(imported).reduce((sum,route)=>sum+routePointCount(route),0);
+    const next={...(db.routes||{}),...imported},candidate={...db,routes:next};
+    if(new TextEncoder().encode(JSON.stringify(candidate)).length>850000)throw new Error('클라우드 저장 한도에 가까워요. 더 짧은 기간의 Timeline 파일을 사용해 주세요.');
+    changeWithUndo(days.length+'일의 동선을 불러왔어요.',()=>{db.routes=next;});
+    notify(days.length+'일 · 위치 점 '+points+'개를 불러왔어요.');
+  }catch(error){alert('동선 불러오기 실패: '+error.message);}
+};
 function selectDay(date) { viewDaily={y:date.getFullYear(),m:date.getMonth(),d:date.getDate()}; renderDaily(); buildMiniCal(); }
 document.getElementById('dayPrev').onclick=() => selectDay(new Date(viewDaily.y,viewDaily.m,viewDaily.d-1));
 document.getElementById('dayNext').onclick=() => selectDay(new Date(viewDaily.y,viewDaily.m,viewDaily.d+1));
@@ -750,7 +803,7 @@ function renderJournal() {
   textarea.oninput=()=>{if(textarea.value) db.journal[k]=textarea.value; else delete db.journal[k]; save();};
   const reflection=document.getElementById('journalReflection'); reflection.textContent=db.reflections[k] || ''; reflection.hidden=!reflection.textContent.trim();
   if(!journalMonth) journalMonth={y:v.y,m:v.m};
-  buildJournalCalendar(); renderJournalPhotos(k);
+  buildJournalCalendar(); renderJournalPhotos(k); renderRouteCard('journalRoute',k);
 }
 function selectJournalDate(date) {
   viewJournal={y:date.getFullYear(),m:date.getMonth(),d:date.getDate()};

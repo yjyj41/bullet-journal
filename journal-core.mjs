@@ -1,4 +1,6 @@
 // Pure data operations shared by the app and regression tests.
+import {validateRoutes} from './timeline.mjs';
+
 export const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -37,7 +39,7 @@ export function resolveJournal(merged, conflicts, choice) {
 
 export function emptyJournal() {
   return {lists:{daily:[],monthly:[]}, days:{}, months:{}, sched:{}, notes:{}, habit:{},
-    habitLog:{}, habits:null, journal:{}, reflections:{}, photos:{}, cal:{}, cal2:{}, future:{}};
+    habitLog:{}, habits:null, journal:{}, reflections:{}, photos:{}, routes:{}, cal:{}, cal2:{}, future:{}};
 }
 
 export function validateJournal(data) {
@@ -50,7 +52,7 @@ export function validateJournal(data) {
     }
   };
   scan(data);
-  for (const key of ['lists','days','months','sched','notes','habit','habitLog','journal','reflections','photos','cal','cal2','future']) {
+  for (const key of ['lists','days','months','sched','notes','habit','habitLog','journal','reflections','photos','routes','cal','cal2','future']) {
     if (data[key] !== undefined && !object(data[key])) throw new Error('잘못된 백업 항목: '+key);
   }
   const safeId = value => typeof value === 'string' && /^[A-Za-z0-9_-]+$/.test(value);
@@ -71,6 +73,7 @@ export function validateJournal(data) {
   }
   if (data.habits != null && (!Array.isArray(data.habits) || !data.habits.every(h => object(h) && safeId(h.id) && typeof h.name === 'string'))) throw new Error('습관 형식 오류');
   if (Object.values(data.photos || {}).some(ids => !Array.isArray(ids) || ids.some(id => !safeId(id)))) throw new Error('사진 목록 형식 오류');
+  data.routes=validateRoutes(data.routes);
   return clone(data);
 }
 
@@ -90,8 +93,8 @@ export function previousOpenTasks(data, before) {
 }
 
 export function journalEntryDates(data) {
-  return [...new Set([...Object.keys(data.journal || {}), ...Object.keys(data.reflections || {}), ...Object.keys(data.photos || {})])]
+  return [...new Set([...Object.keys(data.journal || {}), ...Object.keys(data.reflections || {}), ...Object.keys(data.photos || {}), ...Object.keys(data.routes || {})])]
     .filter(key => /^\d{4}-\d{2}-\d{2}$/.test(key) &&
-      ((data.journal?.[key] || '').trim() || (data.reflections?.[key] || '').trim() || data.photos?.[key]?.length))
+      ((data.journal?.[key] || '').trim() || (data.reflections?.[key] || '').trim() || data.photos?.[key]?.length || data.routes?.[key]))
     .sort();
 }
