@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.css">
 <style>
 :root{--sans:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;--paper:#f3efe3;--paper2:#efe9da;--dot:#cdc4ad;--ink:#34302a;--ink-soft:#7c7565;--red:#a8443a;--rule:#d8cfb8;--shadow:rgba(60,50,30,.18);}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -235,8 +235,8 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 .route-card{min-width:0}.route-toolbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:8px 0}.route-toolbar .route-summary{flex:1;min-width:150px;font-size:13px;color:var(--ink-soft)}
 .route-map{height:310px;width:100%;border:1px solid var(--rule);border-radius:7px;background:var(--paper2);overflow:hidden}.journal-sidebar .route-map{height:210px}.route-empty{padding:14px 10px;border:1px dashed var(--rule);border-radius:7px;color:var(--ink-soft);font-size:13px;line-height:1.6}
 .route-events{display:grid;gap:5px;margin-top:9px;max-height:150px;overflow:auto}.route-event{display:flex;gap:8px;font-size:12px;padding-bottom:4px;border-bottom:1px dotted var(--rule)}.route-event time{color:var(--ink-soft);white-space:nowrap}.route-event span{overflow-wrap:anywhere}
-.route-import{display:inline-flex;align-items:center}.journal-route-box{padding-bottom:15px;margin-bottom:15px;border-bottom:1px solid var(--rule)}.journal-route-box h3{margin-bottom:5px}.leaflet-container{font-family:var(--sans)}
-.route-map .leaflet-tile-pane{filter:grayscale(.92) saturate(.22) brightness(1.08) contrast(.88)}.route-map .leaflet-control-zoom a{background:#f7f4ec;color:var(--ink);border-color:var(--rule)}
+.route-import{display:inline-flex;align-items:center}.journal-route-box{padding-bottom:15px;margin-bottom:15px;border-bottom:1px solid var(--rule)}.journal-route-box h3{margin-bottom:5px}.maplibregl-map{font-family:var(--sans)}
+.route-map .maplibregl-ctrl-group{background:#f7f4ec}.route-map .maplibregl-ctrl-attrib{font-size:10px;background:rgba(247,244,236,.82)}
 .route-stop{width:24px;height:24px;border:2px solid #fff;border-radius:50%;background:var(--ink);color:#fff;text-align:center;font:700 11px/20px var(--sans);box-shadow:0 1px 5px rgba(30,25,20,.35)}
 @media(max-width:640px){.route-map{height:260px}.journal-sidebar .route-map{height:230px}}
 </style>
@@ -386,8 +386,8 @@ dialog{margin:auto;width:min(520px,calc(100% - 32px));max-height:85vh;overflow:a
 <div id="printArea"></div>
 <div id="lightbox"><img alt="사진"></div>
 <input type="file" id="timelineInput" accept="application/json,.json" hidden>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
+import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.mjs';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, getDocFromServer, setDoc, deleteDoc, runTransaction, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -757,15 +757,20 @@ function renderRouteCard(id,key) {
   if(events.length){const list=document.createElement('div');list.className='route-events';for(const event of events){const row=document.createElement('div');row.className='route-event';const time=document.createElement('time');time.textContent=event.time||'시간 미상';const text=document.createElement('span');text.textContent=event.text;row.append(time,text);list.append(row);}host.append(list);}
   const mount=()=>{
     if(!mapHost.isConnected||!mapHost.offsetParent||routeMaps.has(host))return;
-    if(!window.L){mapHost.textContent='지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.';return;}
-    const map=L.map(mapHost,{scrollWheelZoom:false});routeMaps.set(host,map);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
-    const all=routeTrack(route);
-    if(all.length>1){L.polyline(all,{color:'#fffdf7',weight:9,opacity:.92,lineJoin:'round',lineCap:'round'}).addTo(map);L.polyline(all,{color:'#b94b42',weight:4,opacity:.9,lineJoin:'round',lineCap:'round'}).addTo(map);}
-    for(const segment of route.segments||[]){if(segment.recorded&&segment.points.length>1){L.polyline(segment.points,{color:'#7f302b',weight:4.5,opacity:.94,lineJoin:'round',lineCap:'round'}).addTo(map);}}
-    (route.visits||[]).forEach((visit,index)=>{const icon=L.divIcon({className:'',html:'<div class="route-stop">'+(index+1)+'</div>',iconSize:[24,24],iconAnchor:[12,12]});L.marker(visit.point,{icon}).bindPopup((index+1)+'. '+(visitTypes[visit.type]||'방문 장소')+' · '+(visit.start||'시간 미상')).addTo(map);});
-    if(all.length===1)map.setView(all[0],15);else if(all.length)map.fitBounds(L.latLngBounds(all),{padding:[18,18],maxZoom:16});
-    setTimeout(()=>map.invalidateSize(),0);
+    if(!window.maplibregl){mapHost.textContent='지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.';return;}
+    const all=routeTrack(route),center=all[0]?[all[0][1],all[0][0]]:[0,0];
+    const map=new maplibregl.Map({container:mapHost,style:'./terrain-style.json',center,zoom:all.length===1?15:10,attributionControl:true});routeMaps.set(host,map);
+    map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    map.on('load',()=>{
+      if(!mapHost.isConnected)return;
+      const line=points=>({type:'Feature',properties:{},geometry:{type:'LineString',coordinates:points.map(p=>[p[1],p[0]])}});
+      if(all.length>1){map.addSource('route-track',{type:'geojson',data:line(all)});map.addLayer({id:'route-casing',type:'line',source:'route-track',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#fffdf7','line-width':9,'line-opacity':.92}});map.addLayer({id:'route-line',type:'line',source:'route-track',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#b94b42','line-width':4,'line-opacity':.9}});}
+      const recorded=(route.segments||[]).filter(segment=>segment.recorded&&segment.points.length>1).map(segment=>segment.points.map(p=>[p[1],p[0]]));
+      if(recorded.length){map.addSource('route-recorded',{type:'geojson',data:{type:'Feature',properties:{},geometry:{type:'MultiLineString',coordinates:recorded}}});map.addLayer({id:'route-recorded-line',type:'line',source:'route-recorded',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#7f302b','line-width':4.5,'line-opacity':.94}});}
+      (route.visits||[]).forEach((visit,index)=>{const marker=document.createElement('div');marker.className='route-stop';marker.textContent=index+1;const popup=new maplibregl.Popup({offset:14}).setText((index+1)+'. '+(visitTypes[visit.type]||'방문 장소')+' · '+(visit.start||'시간 미상'));new maplibregl.Marker({element:marker}).setLngLat([visit.point[1],visit.point[0]]).setPopup(popup).addTo(map);});
+    });
+    if(all.length>1){const bounds=new maplibregl.LngLatBounds();all.forEach(p=>bounds.extend([p[1],p[0]]));map.fitBounds(bounds,{padding:22,maxZoom:16,duration:0});}
+    setTimeout(()=>map.resize(),0);
   };
   requestAnimationFrame(mount);
 }
