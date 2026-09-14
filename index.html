@@ -717,7 +717,10 @@ function renderToday() {
     const text=document.createElement('p'); text.textContent=item.text;
     const date=document.createElement('small'); date.textContent=day; text.append(date);
     const button=document.createElement('button'); button.className='reset'; button.textContent='이날로 이동';
-    button.onclick=() => moveDailyTask(day,key,index); row.append(text,button); host.append(row);
+    button.onclick=() => moveDailyTask(day,key,index);
+    const del=document.createElement('button'); del.className='reset'; del.textContent='삭제';del.setAttribute('aria-label',day+' 미완료 기록 삭제');
+    del.onclick=() => changeWithUndo('이전 날짜의 미완료 기록을 삭제했어요.',() => db.days[day]?.splice(index,1));
+    row.append(text,button,del); host.append(row);
   }
   const habits=document.getElementById('dailyHabits'); habits.textContent=''; let done=0;
   for (const habit of db.habits || []) {
