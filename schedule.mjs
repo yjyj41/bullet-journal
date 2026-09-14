@@ -1,5 +1,10 @@
 export const SLOT_COUNT=36, SLOT_HEIGHT=26;
 export const scheduleKind=block=>block.kind === 'plan' ? 'plan' : 'actual';
+export function randomScheduleColor(random=Math.random) {
+  const value=Number(random());
+  if(!Number.isFinite(value))return 0;
+  return Math.max(0,Math.min(4,Math.floor(value*5)));
+}
 export function weekDates(date) {
   const monday=new Date(date.getFullYear(),date.getMonth(),date.getDate());
   monday.setDate(monday.getDate()-(monday.getDay()+6)%7);
@@ -31,7 +36,7 @@ export function renderSchedule(host,{dates,keyOf,getData,onEdit,onMove,compact=f
     title.textContent=compact?['일','월','화','수','목','금','토'][date.getDay()]+' '+(date.getMonth()+1)+'/'+date.getDate():'시간별 기록';
     if(compact){title.type='button';title.setAttribute('aria-label',keyOf(date)+' 오늘 탭에서 열기');title.onclick=()=>onDay(date);}
     const labels=document.createElement('div');labels.className='schedule-labels';
-    for(const kind of ['plan','actual']){const button=document.createElement('button');button.type='button';button.textContent=(kind==='plan'?'계획':'실제')+' ＋';button.onclick=()=>onEdit(keyOf(date),{kind,s:0,e:1,text:'',color:kind==='plan'?2:0});labels.append(button);}
+    for(const kind of ['plan','actual']){const button=document.createElement('button');button.type='button';button.textContent=(kind==='plan'?'계획':'실제')+' ＋';button.onclick=()=>onEdit(keyOf(date),{kind,s:0,e:1,text:'',color:kind==='plan'?2:randomScheduleColor()});labels.append(button);}
     head.append(title,labels);grid.append(head);
   }
   const ruler=document.createElement('div');ruler.className='schedule-ruler';
@@ -58,7 +63,7 @@ export function renderSchedule(host,{dates,keyOf,getData,onEdit,onMove,compact=f
       });
       lane.addEventListener('pointerup',()=>{
         if(!selection)return;const {start,end,marker}=selection;marker.remove();selection=null;
-        onEdit(key,{kind,s:Math.min(start,end),e:start===end?Math.min(start+1,SLOT_COUNT-1):Math.max(start,end),text:'',color:kind==='plan'?2:0});
+        onEdit(key,{kind,s:Math.min(start,end),e:start===end?Math.min(start+1,SLOT_COUNT-1):Math.max(start,end),text:'',color:kind==='plan'?2:randomScheduleColor()});
       });
       lane.addEventListener('pointercancel',()=>{selection?.marker.remove();selection=null;});
       for(const block of scheduleItems(getData(),key,kind)){
