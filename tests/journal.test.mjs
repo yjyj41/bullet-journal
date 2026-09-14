@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import {clone,emptyJournal,mergeJournal,resolveJournal,validateJournal,moveTask,previousOpenTasks,journalEntryDates} from '../journal-core.mjs';
 import {createJournalSync} from '../journal-sync.mjs';
 import {weekDates,scheduleKind,scheduleItems,saveSchedule,slotTime,randomScheduleColor} from '../schedule.mjs';
-import {parseTimelineExport,routePointCount,routeSummary,validateRoutes} from '../timeline.mjs';
+import {parseTimelineExport,routePointCount,routeSummary,routeTrack,validateRoutes} from '../timeline.mjs';
 
 test('Google Timeline arrays become compact daily routes',()=>{
   const routes=parseTimelineExport([
@@ -14,6 +14,7 @@ test('Google Timeline arrays become compact daily routes',()=>{
   const route=routes['2026-09-09'];
   assert.equal(route.segments.length,1);assert.equal(route.visits.length,1);assert.equal(route.distanceMeters,1250);
   assert.equal(routePointCount(route),3);assert.equal(routeSummary(route),'방문 1곳 · 1.3km 이동 · 이동 1구간');
+  assert.deepEqual(routeTrack(route),[[51.5,-0.1],[51.51,-0.11]]);
   assert.deepEqual(validateRoutes(routes),routes);
 });
 
